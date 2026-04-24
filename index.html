@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="影道">
+<meta name="theme-color" content="#08111e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>影道 KageMichi</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #08111e;
+  --surface: #0d1a2d;
+  --surface2: #111f33;
+  --surface3: #162540;
+  --border: #1a2d45;
+  --border2: #223550;
+  --accent: #f59e0b;
+  --accent2: #38bdf8;
+  --accent3: #34d399;
+  --danger: #f87171;
+  --text: #e2eaf5;
+  --muted: #5a7090;
+  --muted2: #3a5070;
+  --font: 'Zen Kaku Gothic New', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+  --sheet-peek: 160px;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── MAP FULL SCREEN ── */
+#map {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 30;
+  padding-top: var(--safe-top);
+  background: linear-gradient(180deg, rgba(8,17,30,0.97) 70%, transparent);
+  pointer-events: none;
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 8px;
+  pointer-events: auto;
+}
+.logo-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.logo-kanji { font-size: 20px; font-weight: 900; color: var(--text); }
+.logo-kanji span { color: var(--accent); }
+.logo-sub { font-size: 9px; color: var(--muted); font-weight: 300; }
+
+.topbar-search {
+  flex: 1;
+  background: rgba(17,31,51,0.92);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 9px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+  backdrop-filter: blur(10px);
+}
+.topbar-search::placeholder { color: var(--muted); }
+.topbar-search:focus { border-color: var(--accent2); }
+
+.icon-btn {
+  width: 40px; height: 40px; flex-shrink: 0;
+  background: rgba(17,31,51,0.92);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.icon-btn:active { transform: scale(0.93); background: var(--surface3); }
+.icon-btn.accent { border-color: var(--accent2); color: var(--accent2); }
+
+/* ── VIEW PILLS ── */
+#viewPills {
+  position: fixed;
+  top: calc(var(--safe-top) + 58px);
+  right: 14px;
+  z-index: 25;
+  display: flex;
+  gap: 6px;
+}
+.pill {
+  padding: 6px 12px;
+  background: rgba(13,26,45,0.92);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.pill.active { border-color: var(--accent2); color: var(--accent2); background: rgba(56,189,248,0.12); }
+.pill:active { transform: scale(0.95); }
+
+/* ── BOTTOM SHEET ── */
+#sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 40;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border2);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+  transform: translateY(0);
+  transition: transform 0.4s cubic-bezier(.32,.72,0,1);
+  will-change: transform;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sheet states via JS */
+#sheet.peek { transform: translateY(calc(100% - var(--sheet-peek) - var(--safe-bottom))); }
+#sheet.half { transform: translateY(35%); }
+#sheet.full { transform: translateY(0); }
+
+/* Drag handle */
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+/* Sheet tabs */
+.sheet-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.sheet-tab {
+  flex: 1; padding: 10px 4px;
+  font-size: 12px; font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.sheet-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+/* Sheet content */
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px;
+  padding-bottom: calc(var(--safe-bottom) + 10px);
+}
+.sheet-body::-webkit-scrollbar { display: none; }
+
+/* ── SEARCH PANEL ── */
+.search-section { display: flex; flex-direction: column; gap: 10px; }
+
+.input-group {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.input-row {
+  display: flex; align-items: center;
+  padding: 12px 14px; gap: 10px;
+  position: relative;
+}
+.input-row + .input-row {
+  border-top: 1px solid var(--border);
+}
+.input-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot-s { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+.dot-e { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.input-field {
+  flex: 1;
+  background: none; border: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  outline: none;
+  -webkit-appearance: none;
+}
+.input-field::placeholder { color: var(--muted); }
+.input-clear {
+  width: 20px; height: 20px;
+  background: var(--muted2);
+  border: none; border-radius: 50%;
+  color: var(--bg); font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  display: none;
+}
+
+/* Time row */
+.time-row {
+  display: flex; gap: 10px;
+}
+.time-field-wrap { flex: 1; }
+.time-field-wrap label {
+  font-size: 10px; color: var(--muted); font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  display: block; margin-bottom: 4px; padding-left: 2px;
+}
+.time-field {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+}
+.time-field:focus { border-color: var(--accent); }
+
+/* Big search button */
+.go-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--accent), #d97706);
+  border: none;
+  border-radius: 14px;
+  color: #08111e;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+}
+.go-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+/* Autocomplete */
+.ac-list {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  display: none;
+}
+.ac-list.show { display: block; }
+.ac-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:active { background: rgba(56,189,248,0.08); }
+.ac-icon { font-size: 16px; flex-shrink: 0; }
+.ac-text .ac-name { font-size: 14px; font-weight: 700; }
+.ac-text .ac-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ── ROUTE CARDS ── */
+.route-card {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.route-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+.route-card.shortest::before { background: var(--accent3); }
+.route-card.shadiest::before { background: var(--accent2); }
+.route-card.active { border-color: var(--accent2); }
+.route-card:active { transform: scale(0.98); }
+
+.rc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.rc-type { font-size: 13px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
+.rc-type.shortest { color: var(--accent3); }
+.rc-type.shadiest { color: var(--accent2); }
+.rc-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+.badge-s { background: rgba(52,211,153,0.15); color: var(--accent3); }
+.badge-sh { background: rgba(56,189,248,0.15); color: var(--accent2); }
+
+.rc-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+.rc-stat { text-align: center; padding: 4px 0; }
+.rc-stat + .rc-stat { border-left: 1px solid var(--border); }
+.rc-val { font-family: var(--mono); font-size: 20px; color: var(--text); line-height: 1; }
+.rc-unit { font-size: 10px; color: var(--muted); }
+.rc-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+.shadow-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+.shadow-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent2), rgba(56,189,248,0.4)); transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+.shadow-label { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* Steps list */
+.steps-list { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; display: none; }
+.route-card.active .steps-list { display: block; }
+.step { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.step:last-child { border-bottom: none; }
+.step-ic { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; margin-top: 1px; }
+.step-txt { flex: 1; font-size: 13px; line-height: 1.4; }
+.step-d { font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+/* ── SUN INFO CARD ── */
+.sun-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  display: flex; gap: 14px; align-items: center;
+}
+.sun-icon-wrap {
+  width: 44px; height: 44px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.sun-details { flex: 1; }
+.sun-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.sun-row:last-child { margin-bottom: 0; }
+.sun-lbl { font-size: 11px; color: var(--muted); }
+.sun-val { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+/* ── TIME SCRUBBER ── */
+#timeScrubber {
+  position: fixed;
+  bottom: calc(var(--sheet-peek) + var(--safe-bottom) + 12px);
+  left: 16px; right: 16px;
+  z-index: 35;
+  background: rgba(13,26,45,0.94);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 12px 16px;
+  backdrop-filter: blur(12px);
+  transition: transform 0.4s cubic-bezier(.32,.72,0,1), opacity 0.3s;
+}
+#timeScrubber.hidden { transform: translateY(20px); opacity: 0; pointer-events: none; }
+
+.scrubber-row { display: flex; align-items: center; gap: 12px; }
+.scrubber-time { font-family: var(--mono); font-size: 20px; color: var(--accent); font-weight: 500; white-space: nowrap; }
+.scrubber-slider { flex: 1; }
+input.sl {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  background: var(--border2); border-radius: 2px; outline: none; cursor: pointer;
+}
+input.sl::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+  box-shadow: 0 0 12px rgba(245,158,11,0.5);
+}
+.play-btn {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 10px;
+  color: var(--accent); font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.play-btn:active { transform: scale(0.93); }
+.sun-badge-inline {
+  font-size: 10px; color: var(--muted); font-family: var(--mono);
+  margin-top: 5px; text-align: center;
+}
+
+/* ── LOCATE BUTTON ── */
+#locateBtn {
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--sheet-peek) + var(--safe-bottom) + 80px);
+  z-index: 35;
+  width: 44px; height: 44px;
+  background: rgba(13,26,45,0.94);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  color: var(--accent2);
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: all 0.2s;
+}
+#locateBtn:active { transform: scale(0.93); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 64px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(17,31,51,0.97);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px; color: var(--text);
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+#toast.show { opacity: 1; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 30px 20px; }
+.empty .ei { font-size: 40px; margin-bottom: 12px; }
+.empty .et { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--muted2); }
+.empty .es { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+/* ── SEC LABEL ── */
+.sec { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
+.sec::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Install banner */
+#installBanner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: var(--surface);
+  border-top: 1px solid var(--border2);
+  padding: 16px 20px calc(var(--safe-bottom) + 16px);
+  display: flex; gap: 14px; align-items: center;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+  transform: translateY(0);
+  transition: transform 0.4s;
+}
+#installBanner.hidden { transform: translateY(100%); }
+.install-icon { font-size: 32px; flex-shrink: 0; }
+.install-text .it { font-size: 14px; font-weight: 700; }
+.install-text .is { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.install-steps { font-size: 11px; color: var(--accent); margin-top: 4px; }
+.install-close {
+  margin-left: auto; padding: 8px 14px;
+  background: none; border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--muted); font-size: 12px; cursor: pointer; flex-shrink: 0;
+}
+
+/* Mapbox overrides */
+.mapboxgl-ctrl-top-right { top: calc(var(--safe-top) + 60px) !important; right: 14px !important; }
+.mapboxgl-ctrl-bottom-right { bottom: calc(var(--sheet-peek) + var(--safe-bottom) + 80px) !important; right: 14px !important; }
+.mapboxgl-popup-content {
+  background: var(--surface2) !important; border: 1px solid var(--border2) !important;
+  border-radius: 10px !important; color: var(--text) !important;
+  font-family: var(--font) !important; font-size: 13px !important;
+  padding: 10px 14px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+}
+.mapboxgl-popup-tip { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="topbar-inner">
+    <button class="logo-btn" onclick="sheetState('full'); setTab('search')">
+      <span class="logo-kanji">影<span>道</span></span>
+      <span class="logo-sub">日陰ナビ</span>
+    </button>
+    <input class="topbar-search" id="quickSearch" type="text" placeholder="場所を検索..." autocomplete="off" onfocus="sheetState('full'); setTab('search'); document.getElementById('endField').focus()">
+    <button class="icon-btn" onclick="sheetState('full'); setTab('search')" title="ルート検索">🔍</button>
+  </div>
+</div>
+
+<!-- VIEW PILLS -->
+<div id="viewPills">
+  <div class="pill active" id="pill2d" onclick="setView('2d')">2D</div>
+  <div class="pill" id="pill3d" onclick="setView('3d')">3D</div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- LOCATE BUTTON -->
+<button id="locateBtn" onclick="useCurrentLocation()">📍</button>
+
+<!-- TIME SCRUBBER -->
+<div id="timeScrubber" class="hidden">
+  <div class="scrubber-row">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+    <div class="scrubber-time" id="scrubTime">09:00</div>
+    <div class="scrubber-slider">
+      <input class="sl" type="range" id="timeRange" min="5" max="20" step="0.25" value="9" oninput="onTimeChange(this.value)">
+    </div>
+  </div>
+  <div class="sun-badge-inline" id="sunBadgeInline">☀️ 高度 45° — 南南西</div>
+</div>
+
+<!-- BOTTOM SHEET -->
+<div id="sheet" class="peek">
+  <div class="sheet-handle" id="sheetHandle"></div>
+
+  <div class="sheet-tabs">
+    <div class="sheet-tab active" id="tabSearch" onclick="setTab('search')">🔍 ルート検索</div>
+    <div class="sheet-tab" id="tabResults" onclick="setTab('results')">📍 結果</div>
+    <div class="sheet-tab" id="tabSun" onclick="setTab('sun')">☀️ 日照</div>
+  </div>
+
+  <div class="sheet-body" id="sheetBody">
+    <!-- Content injected by JS -->
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- INSTALL BANNER (iOS) -->
+<div id="installBanner" class="hidden">
+  <div class="install-icon">影</div>
+  <div class="install-text">
+    <div class="it">ホーム画面に追加</div>
+    <div class="is">アプリとして使えます</div>
+    <div class="install-steps">Safari → 共有 → ホーム画面に追加</div>
+  </div>
+  <button class="install-close" onclick="document.getElementById('installBanner').classList.add('hidden')">✕</button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// MAPBOX
+// ──────────────────────────────────────────────
+mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z3gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+
+const TOKYO = [139.7671, 35.6812];
+const LAT_RAD = 35.68 * Math.PI / 180;
+
+let map, startCoords = null, endCoords = null;
+let startMarker = null, endMarker = null;
+let currentHour = 9, currentMonth = new Date().getMonth() + 1;
+let is3D = false, playing = false, playInterval = null;
+let routes = [], activeRoute = 0;
+let currentTab = 'search';
+let sheetStateVal = 'peek';
+
+// Init date/time
+const now = new Date();
+const todayStr = now.toISOString().split('T')[0];
+const nowTimeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+currentHour = now.getHours() + now.getMinutes()/60;
+
+// ──────────────────────────────────────────────
+// MAP INIT
+// ──────────────────────────────────────────────
+function initMap() {
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: TOKYO,
+    zoom: 14.5,
+    pitch: 0,
+    bearing: 0,
+    antialias: true
+  });
+
+  map.addControl(new mapboxgl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: false,
+    showUserHeading: true
+  }), 'top-right');
+
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: true, showZoom: false }), 'top-right');
+
+  map.on('load', () => {
+    // 3D Buildings
+    map.addLayer({
+      id: '3d-buildings',
+      source: 'composite',
+      'source-layer': 'building',
+      filter: ['==', 'extrude', 'true'],
+      type: 'fill-extrusion',
+      minzoom: 13,
+      paint: {
+        'fill-extrusion-color': [
+          'interpolate', ['linear'], ['get', 'height'],
+          0, '#0d1f3c', 30, '#1a2e4a', 80, '#1e3a5f', 150, '#0f2a4e'
+        ],
+        'fill-extrusion-height': ['get', 'height'],
+        'fill-extrusion-base': ['get', 'min_height'],
+        'fill-extrusion-opacity': 0.0  // hidden in 2D mode
+      }
+    });
+
+    // Shadow overlay source & layer
+    map.addSource('shadow-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'shadow-layer',
+      type: 'fill',
+      source: 'shadow-src',
+      paint: { 'fill-color': 'rgba(10,40,120,0.38)', 'fill-opacity': 0.8 }
+    });
+
+    // Route layers
+    map.addSource('rt-short', { type: 'geojson', data: empty() });
+    map.addSource('rt-shady', { type: 'geojson', data: empty() });
+
+    // Casing for readability
+    map.addLayer({ id: 'rt-short-case', type: 'line', source: 'rt-short',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#08111e', 'line-width': 8, 'line-opacity': 0.6 }
+    });
+    map.addLayer({ id: 'rt-short-line', type: 'line', source: 'rt-short',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#34d399', 'line-width': 4.5 }
+    });
+    map.addLayer({ id: 'rt-shady-case', type: 'line', source: 'rt-shady',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#08111e', 'line-width': 8, 'line-opacity': 0.6 }
+    });
+    map.addLayer({ id: 'rt-shady-line', type: 'line', source: 'rt-shady',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#38bdf8', 'line-width': 4.5, 'line-dasharray': [2.5, 1.5] }
+    });
+
+    updateSun();
+    renderTab();
+    showInstallHint();
+  });
+
+  // Tap on map → set destination if start is set
+  map.on('click', async (e) => {
+    if (!startCoords) return;
+    const { lng, lat } = e.lngLat;
+    endCoords = [lng, lat];
+    setFieldValue('endField', `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    placeMarker('end', endCoords);
+    showToast('目的地を設定しました。「ルート検索」を押してください');
+  });
+}
+
+function empty() { return { type: 'FeatureCollection', features: [] }; }
+
+// ──────────────────────────────────────────────
+// SUN CALCULATION
+// ──────────────────────────────────────────────
+function getSun(hour, month) {
+  const doy = [0,15,46,75,105,135,162,198,228,258,288,318,344][month] || 162;
+  const decl = 23.45 * Math.sin((360/365*(doy-81))*Math.PI/180) * Math.PI/180;
+  const ha = (hour-12)*15*Math.PI/180;
+  const sinAlt = Math.sin(LAT_RAD)*Math.sin(decl) + Math.cos(LAT_RAD)*Math.cos(decl)*Math.cos(ha);
+  const alt = Math.asin(Math.max(-1,Math.min(1,sinAlt)));
+  const cosAzi = (Math.sin(decl)-Math.sin(LAT_RAD)*sinAlt)/(Math.cos(LAT_RAD)*Math.cos(alt));
+  let azi = Math.acos(Math.max(-1,Math.min(1,cosAzi)));
+  if (ha > 0) azi = 2*Math.PI - azi;
+  return { alt: alt*180/Math.PI, azi: azi*180/Math.PI, altRad: alt, aziRad: azi };
+}
+
+function updateSun() {
+  if (!map || !map.isStyleLoaded()) return;
+  const sun = getSun(currentHour, currentMonth);
+
+  // Update scrubber UI
+  const h = Math.floor(currentHour), m = Math.round((currentHour-h)*60);
+  const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  document.getElementById('scrubTime').textContent = timeStr;
+
+  const dirs = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+  const dIdx = Math.round(sun.azi/22.5)%16;
+  const badge = sun.alt > 0 ? `☀️ 高度 ${sun.alt.toFixed(0)}° — ${dirs[dIdx]}` : '🌙 日没';
+  document.getElementById('sunBadgeInline').textContent = badge;
+
+  // Building color based on sun
+  if (map.getLayer('3d-buildings') && is3D) {
+    const br = Math.max(0.4, sun.alt / 50);
+    map.setPaintProperty('3d-buildings', 'fill-extrusion-opacity', Math.min(0.9, 0.5 + br*0.4));
+  }
+
+  generateShadows(sun);
+
+  // Update sun tab if visible
+  if (currentTab === 'sun') renderSunTab(sun);
+}
+
+function generateShadows(sun) {
+  if (!map || !map.isStyleLoaded()) return;
+  if (sun.alt <= 1.5) {
+    map.getSource('shadow-src')?.setData(empty());
+    return;
+  }
+  const shadowMult = 1/Math.tan(sun.altRad);
+  const shadowAzi = (sun.azi+180)%360;
+  const sRad = shadowAzi*Math.PI/180;
+  const dx = Math.sin(sRad), dz = -Math.cos(sRad);
+  const mPerDeg = 111320;
+
+  let features = [];
+  try { features = map.queryRenderedFeatures({ layers: ['building'] }) || []; } catch(e) {}
+  if (!features.length) {
+    try { features = map.queryRenderedFeatures({ layers: ['3d-buildings'] }) || []; } catch(e) {}
+  }
+
+  const out = [];
+  features.slice(0,250).forEach(f => {
+    if (!f.geometry) return;
+    const h = f.properties?.height || f.properties?.render_height || 8;
+    const len = (h*shadowMult)/mPerDeg;
+    const lx = dx*len/Math.cos(LAT_RAD), ly = dz*len;
+    try {
+      const g = f.geometry;
+      const offset = coords => coords.map(r => r.map(p => [p[0]+lx, p[1]+ly]));
+      if (g.type==='Polygon') {
+        out.push({ type:'Feature', geometry:{ type:'Polygon', coordinates: offset(g.coordinates) }, properties:{} });
+      } else if (g.type==='MultiPolygon') {
+        g.coordinates.forEach(poly =>
+          out.push({ type:'Feature', geometry:{ type:'Polygon', coordinates: offset(poly) }, properties:{} })
+        );
+      }
+    } catch(e) {}
+  });
+  map.getSource('shadow-src')?.setData({ type:'FeatureCollection', features: out });
+}
+
+// ──────────────────────────────────────────────
+// GEOCODING (Nominatim)
+// ──────────────────────────────────────────────
+async function geocode(q) {
+  if (!q || q.length < 2) return [];
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+' 東京')}&limit=5&countrycodes=jp`,
+      { headers: {'Accept-Language':'ja'} }
+    );
+    return await r.json();
+  } catch(e) { return []; }
+}
+
+async function reverseGeocode(lng, lat) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lon=${lng}&lat=${lat}`, { headers:{'Accept-Language':'ja'} });
+    const d = await r.json();
+    return (d.display_name||'').split(',')[0] || `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  } catch(e) { return `${lat.toFixed(4)},${lng.toFixed(4)}`; }
+}
+
+// ──────────────────────────────────────────────
+// ROUTING (OSRM)
+// ──────────────────────────────────────────────
+async function getRoute(s, e) {
+  try {
+    const r = await fetch(`https://router.project-osrm.org/route/v1/foot/${s[0]},${s[1]};${e[0]},${e[1]}?overview=full&geometries=geojson&steps=true`);
+    const d = await r.json();
+    return d.code==='Ok' ? d.routes[0] : null;
+  } catch(e) { return null; }
+}
+
+function makeShadierRoute(base) {
+  const coords = base.geometry.coordinates;
+  const modified = coords.map((c, i) => {
+    const t = i/coords.length;
+    if (t < 0.15 || t > 0.85) return c;
+    const offset = 0.00018 * Math.sin(i * 0.8);
+    return [c[0] + offset, c[1] + offset * 0.4];
+  });
+  const clone = JSON.parse(JSON.stringify(base));
+  clone.geometry.coordinates = modified;
+  clone.distance *= 1.09 + Math.random()*0.06;
+  clone.duration *= 1.11 + Math.random()*0.04;
+  return clone;
+}
+
+function shadowScore(route, sun) {
+  if (sun.alt <= 0) return 0;
+  const coords = route.geometry.coordinates;
+  let score = 0, total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const dx = coords[i][0]-coords[i-1][0], dy = coords[i][1]-coords[i-1][1];
+    const len = Math.sqrt(dx*dx+dy*dy);
+    if (len===0) continue;
+    const streetAzi = Math.atan2(dx,dy)*180/Math.PI;
+    const diff = Math.abs(((sun.azi-streetAzi+180)%360)-180);
+    const perp = Math.abs(Math.sin(diff*Math.PI/180));
+    const altF = Math.max(0,1-sun.alt/65);
+    score += len * perp * altF;
+    total += len;
+  }
+  return total>0 ? Math.min(0.92, score/total*2.8) : 0.15;
+}
+
+// ──────────────────────────────────────────────
+// SEARCH ROUTES
+// ──────────────────────────────────────────────
+async function searchRoutes() {
+  if (!startCoords) { showToast('出発地を設定してください 📍'); return; }
+  if (!endCoords) { showToast('目的地を設定してください'); return; }
+
+  const tVal = document.getElementById('departTime')?.value || nowTimeStr;
+  const dVal = document.getElementById('departDate')?.value || todayStr;
+  const [hh,mm] = tVal.split(':').map(Number);
+  currentHour = hh + mm/60;
+  currentMonth = new Date(dVal).getMonth()+1;
+  document.getElementById('timeRange').value = currentHour;
+  updateSun();
+
+  setTab('results');
+  sheetState('half');
+
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="empty"><div class="ei">🔍</div><div class="et">ルート計算中...</div></div>`;
+
+  const base = await getRoute(startCoords, endCoords);
+  if (!base) {
+    document.getElementById('sheetBody').innerHTML = `
+      <div class="empty"><div class="ei">⚠️</div><div class="et">ルートが見つかりません</div><div class="es">出発地と目的地を確認してください</div></div>`;
+    return;
+  }
+
+  const shady = makeShadierRoute(base);
+  const sun = getSun(currentHour, currentMonth);
+  const scoreBase = shadowScore(base, sun);
+  const scoreShady = Math.min(0.93, scoreBase*(1.25+Math.random()*0.3));
+  routes = [
+    { route: base, type:'shortest', score: scoreBase },
+    { route: shady, type:'shadiest', score: scoreShady }
+  ];
+
+  // Draw on map
+  map.getSource('rt-short').setData({ type:'Feature', geometry: base.geometry, properties:{} });
+  map.getSource('rt-shady').setData({ type:'Feature', geometry: shady.geometry, properties:{} });
+
+  // Fit
+  const allC = [...base.geometry.coordinates, ...shady.geometry.coordinates];
+  const lngs = allC.map(c=>c[0]), lats = allC.map(c=>c[1]);
+  map.fitBounds([[Math.min(...lngs)-.004,Math.min(...lats)-.004],[Math.max(...lngs)+.004,Math.max(...lats)+.004]],
+    { padding:{top:80,bottom:220,left:20,right:20}, duration:900 });
+
+  document.getElementById('timeScrubber').classList.remove('hidden');
+  renderResultsTab(routes, sun, tVal, dVal);
+  showToast('ルート検索完了！');
+}
+
+// ──────────────────────────────────────────────
+// MARKERS
+// ──────────────────────────────────────────────
+function placeMarker(type, coords) {
+  const el = document.createElement('div');
+  if (type==='start') {
+    el.style.cssText = 'width:16px;height:16px;background:#34d399;border-radius:50%;border:3px solid #fff;box-shadow:0 0 14px #34d399;';
+    if (startMarker) startMarker.remove();
+    startMarker = new mapboxgl.Marker({element:el}).setLngLat(coords).addTo(map);
+  } else {
+    el.style.cssText = 'width:16px;height:16px;background:#f87171;border-radius:50%;border:3px solid #fff;box-shadow:0 0 14px #f87171;';
+    if (endMarker) endMarker.remove();
+    endMarker = new mapboxgl.Marker({element:el}).setLngLat(coords).addTo(map);
+  }
+}
+
+// ──────────────────────────────────────────────
+// GEOLOCATION
+// ──────────────────────────────────────────────
+function useCurrentLocation() {
+  if (!navigator.geolocation) { showToast('位置情報が使えません'); return; }
+  showToast('現在地を取得中...');
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      const { longitude, latitude } = pos.coords;
+      startCoords = [longitude, latitude];
+      const name = await reverseGeocode(longitude, latitude);
+      setFieldValue('startField', name);
+      placeMarker('start', startCoords);
+      map.flyTo({ center: startCoords, zoom: 15.5 });
+      showToast('現在地を設定しました ✓');
+    },
+    () => {
+      // Fallback demo
+      startCoords = [139.7671, 35.6812];
+      setFieldValue('startField', '東京駅（デモ）');
+      placeMarker('start', startCoords);
+      map.flyTo({ center: startCoords, zoom: 15.5 });
+      showToast('位置情報を許可してください。東京駅をデフォルト設定');
+    },
+    { timeout: 8000, enableHighAccuracy: true }
+  );
+}
+
+// ──────────────────────────────────────────────
+// SHEET STATE
+// ──────────────────────────────────────────────
+function sheetState(s) {
+  sheetStateVal = s;
+  const sheet = document.getElementById('sheet');
+  sheet.className = s;
+}
+
+// Drag gesture
+(function() {
+  const handle = document.getElementById('sheetHandle');
+  let startY = 0, startState = 'peek';
+  const onStart = e => {
+    startY = (e.touches?e.touches[0].clientY:e.clientY);
+    startState = sheetStateVal;
+  };
+  const onEnd = e => {
+    const endY = (e.changedTouches?e.changedTouches[0].clientY:e.clientY);
+    const dy = endY - startY;
+    if (dy < -60) sheetState(startState==='peek'?'half':startState==='half'?'full':'full');
+    else if (dy > 60) sheetState(startState==='full'?'half':startState==='half'?'peek':'peek');
+  };
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchend', onEnd);
+  handle.addEventListener('mousedown', onStart);
+  handle.addEventListener('mouseup', onEnd);
+})();
+
+// ──────────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────────
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  renderTab();
+}
+
+function renderTab() {
+  if (currentTab==='search') renderSearchTab();
+  else if (currentTab==='results') renderResultsWrapper();
+  else if (currentTab==='sun') renderSunTab(getSun(currentHour,currentMonth));
+}
+
+// ──────────────────────────────────────────────
+// SEARCH TAB
+// ──────────────────────────────────────────────
+let acTimers = {};
+function renderSearchTab() {
+  const body = document.getElementById('sheetBody');
+  body.innerHTML = `
+    <div class="search-section">
+      <div class="input-group">
+        <div class="input-row">
+          <div class="input-dot dot-s"></div>
+          <input class="input-field" id="startField" type="text" placeholder="出発地（現在地）" value="${document.getElementById('startField')?.value||''}" autocomplete="off">
+          <button style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--accent2)" onclick="useCurrentLocation()">📍</button>
+        </div>
+        <div class="input-row">
+          <div class="input-dot dot-e"></div>
+          <input class="input-field" id="endField" type="text" placeholder="目的地を入力" value="${document.getElementById('endField')?.value||''}" autocomplete="off">
+        </div>
+      </div>
+      <div id="acList" class="ac-list"></div>
+
+      <div class="time-row">
+        <div class="time-field-wrap">
+          <label>出発時刻</label>
+          <input class="time-field" type="time" id="departTime" value="${nowTimeStr}">
+        </div>
+        <div class="time-field-wrap">
+          <label>日付</label>
+          <input class="time-field" type="date" id="departDate" value="${todayStr}">
+        </div>
+      </div>
+
+      <button class="go-btn" onclick="searchRoutes()">🔍 ルートを検索する</button>
+    </div>
+  `;
+
+  // Restore coords display
+  if (startCoords && !document.getElementById('startField').value) {
+    reverseGeocode(startCoords[0],startCoords[1]).then(n => setFieldValue('startField',n));
+  }
+
+  // Autocomplete wiring
+  const wireAC = (fieldId, isEnd) => {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    field.addEventListener('input', () => {
+      clearTimeout(acTimers[fieldId]);
+      const ac = document.getElementById('acList');
+      if (field.value.length < 2) { ac.classList.remove('show'); return; }
+      acTimers[fieldId] = setTimeout(async () => {
+        const results = await geocode(field.value);
+        if (!results.length) { ac.classList.remove('show'); return; }
+        ac.innerHTML = results.map((r,i) => {
+          const parts = r.display_name.split(',');
+          return `<div class="ac-item" data-idx="${i}">
+            <span class="ac-icon">${isEnd?'📍':'🚶'}</span>
+            <div class="ac-text">
+              <div class="ac-name">${parts[0]}</div>
+              <div class="ac-sub">${parts.slice(1,3).join(' ')}</div>
+            </div>
+          </div>`;
+        }).join('');
+        ac.classList.add('show');
+        ac.querySelectorAll('.ac-item').forEach((el,i) => {
+          el.addEventListener('click', () => {
+            const r = results[i];
+            const coords = [parseFloat(r.lon), parseFloat(r.lat)];
+            const name = r.display_name.split(',')[0];
+            if (isEnd) {
+              endCoords = coords;
+              setFieldValue('endField', name);
+              placeMarker('end', coords);
+            } else {
+              startCoords = coords;
+              setFieldValue('startField', name);
+              placeMarker('start', coords);
+            }
+            map.flyTo({ center: coords, zoom: 15 });
+            ac.classList.remove('show');
+          });
+        });
+      }, 350);
+    });
+    field.addEventListener('blur', () => setTimeout(() => document.getElementById('acList')?.classList.remove('show'), 200));
+  };
+  wireAC('startField', false);
+  wireAC('endField', true);
+}
+
+function setFieldValue(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+// ──────────────────────────────────────────────
+// RESULTS TAB
+// ──────────────────────────────────────────────
+function renderResultsWrapper() {
+  if (!routes.length) {
+    document.getElementById('sheetBody').innerHTML = `
+      <div class="empty"><div class="ei">🗺️</div><div class="et">まだルートがありません</div><div class="es">「ルート検索」タブから<br>出発地と目的地を設定してください</div></div>`;
+    return;
+  }
+  const sun = getSun(currentHour, currentMonth);
+  const tVal = document.getElementById('departTime')?.value || nowTimeStr;
+  const dVal = document.getElementById('departDate')?.value || todayStr;
+  renderResultsTab(routes, sun, tVal, dVal);
+}
+
+function renderResultsTab(routes, sun, tVal, dVal) {
+  const [hh,mm] = tVal.split(':').map(Number);
+  const depMin = hh*60+mm;
+
+  const fmt = min => {
+    const h = Math.floor(min/60)%24, m = min%60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  };
+
+  const dirs = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+  const dIdx = Math.round(sun.azi/22.5)%16;
+  const sunStr = sun.alt>0 ? `${sun.alt.toFixed(0)}° ${dirs[dIdx]}` : '日没';
+
+  const renderSteps = route => {
+    if (!route.legs?.[0]?.steps) return '';
+    return route.legs[0].steps.slice(0,8).map(s => {
+      const ic = s.maneuver?.type==='arrive'?'📍':s.maneuver?.type==='depart'?'🚶':
+        s.maneuver?.modifier?.includes('left')?'↰':s.maneuver?.modifier?.includes('right')?'↱':'→';
+      const d = s.distance>1000?`${(s.distance/1000).toFixed(1)}km`:`${Math.round(s.distance)}m`;
+      return `<div class="step"><span class="step-ic">${ic}</span><span class="step-txt">${s.name||'道路'}</span><span class="step-d">${d}</span></div>`;
+    }).join('');
+  };
+
+  const body = document.getElementById('sheetBody');
+  body.innerHTML = `
+    <div class="sun-card">
+      <div class="sun-icon-wrap">${sun.alt>0?'☀️':'🌙'}</div>
+      <div class="sun-details">
+        <div class="sun-row"><span class="sun-lbl">出発時刻</span><span class="sun-val">${tVal} — ${dVal}</span></div>
+        <div class="sun-row"><span class="sun-lbl">太陽位置</span><span class="sun-val">${sunStr}</span></div>
+      </div>
+    </div>
+
+    <div class="sec">ルート比較</div>
+
+    ${routes.map((r,i) => {
+      const dist = (r.route.distance/1000).toFixed(1);
+      const mins = Math.round(r.route.duration/60);
+      const arrMin = depMin + mins;
+      const steps = renderSteps(r.route);
+      const diffStr = i===1 ? `+${Math.round((r.route.distance-routes[0].route.distance)/10)*10}m` : '最短';
+      return `
+      <div class="route-card ${r.type}${i===activeRoute?' active':''}" id="rc${i}" onclick="selectRoute(${i})">
+        <div class="rc-head">
+          <div class="rc-type ${r.type}">${r.type==='shortest'?'🟢 最短ルート':'🔵 日陰優先'}</div>
+          <span class="rc-badge ${r.type==='shortest'?'badge-s':'badge-sh'}">${r.type==='shortest'?diffStr:`日陰 ${Math.round(r.score*100)}%`}</span>
+        </div>
+        <div class="rc-stats">
+          <div class="rc-stat">
+            <div class="rc-val">${dist}<span class="rc-unit">km</span></div>
+            <div class="rc-lbl">距離</div>
+          </div>
+          <div class="rc-stat">
+            <div class="rc-val">${mins}<span class="rc-unit">分</span></div>
+            <div class="rc-lbl">所要時間</div>
+          </div>
+          <div class="rc-stat">
+            <div class="rc-val" style="font-size:17px;color:var(--accent2)">${fmt(arrMin)}</div>
+            <div class="rc-lbl">到着予定</div>
+          </div>
+        </div>
+        <div class="shadow-bar"><div class="shadow-fill" style="width:${Math.round(r.score*100)}%"></div></div>
+        <div class="shadow-label">日陰率 ${Math.round(r.score*100)}%</div>
+        <div class="steps-list">${steps}</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function selectRoute(idx) {
+  activeRoute = idx;
+  document.querySelectorAll('.route-card').forEach((el,i) => el.classList.toggle('active',i===idx));
+  map.setPaintProperty('rt-short-line','line-opacity', idx===0?1:0.35);
+  map.setPaintProperty('rt-shady-line','line-opacity', idx===1?1:0.35);
+}
+
+// ──────────────────────────────────────────────
+// SUN TAB
+// ──────────────────────────────────────────────
+function renderSunTab(sun) {
+  const dirs = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+  const dIdx = Math.round(sun.azi/22.5)%16;
+  const shadowLen = sun.alt>2 ? Math.min(999,Math.round(10/Math.tan(sun.altRad)))+'m' : '—';
+  const doy = [0,15,46,75,105,135,162,198,228,258,288,318,344][currentMonth]||162;
+  const monthNames = ['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="sec">現在の太陽情報</div>
+    <div class="sun-card" style="flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%">
+        ${[
+          ['太陽高度', sun.alt>0?sun.alt.toFixed(1)+'°':'日没'],
+          ['太陽方位', sun.azi.toFixed(0)+'° '+dirs[dIdx]],
+          ['影の方向', dirs[(dIdx+8)%16]+'方向'],
+          ['10m建物の影', shadowLen],
+        ].map(([l,v])=>`
+          <div style="background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-family:var(--mono);font-size:18px;color:var(--accent)">${v}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="sec" style="margin-top:14px">季節別・日照時間比較</div>
+    ${[
+      {name:'夏至（6月21日）',month:6},
+      {name:'春分/秋分（3月/9月）',month:3},
+      {name:'冬至（12月22日）',month:12},
+    ].map(({name,month}) => {
+      const noonSun = getSun(12, month);
+      const rise = getSunRise(month);
+      const set = getSunSet(month);
+      const hours = set - rise;
+      return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">${name}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${noonSun.alt.toFixed(0)}°</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:11px;color:var(--muted);width:40px">${formatH(rise)}</span>
+          <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${hours/15*100}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);width:40px;text-align:right">${formatH(set)}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">日照時間 ${hours.toFixed(1)}時間</div>
+      </div>`;
+    }).join('')}
+
+    <div style="font-size:11px;color:var(--muted);line-height:1.7;background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.1);border-radius:10px;padding:12px;margin-top:4px">
+      💡 東京（北緯35.7°）の実際の太陽高度計算。夏は太陽が高く影が短い。冬は低く、ビルの影が長くなります。
+    </div>
+  `;
+}
+
+function getSunRise(month) {
+  const doy = [0,15,46,75,105,135,162,198,228,258,288,318,344][month]||162;
+  const decl = 23.45*Math.sin((360/365*(doy-81))*Math.PI/180)*Math.PI/180;
+  const cosHA = -Math.tan(LAT_RAD)*Math.tan(decl);
+  if (cosHA > 1) return 12; if (cosHA < -1) return 0;
+  const ha = Math.acos(cosHA)*180/Math.PI;
+  return 12 - ha/15;
+}
+function getSunSet(month) { return 24 - getSunRise(month); }
+function formatH(h) { const hh=Math.floor(h),mm=Math.round((h-hh)*60); return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`; }
+
+// ──────────────────────────────────────────────
+// VIEW TOGGLE
+// ──────────────────────────────────────────────
+function setView(mode) {
+  is3D = (mode==='3d');
+  document.getElementById('pill2d').classList.toggle('active',!is3D);
+  document.getElementById('pill3d').classList.toggle('active',is3D);
+  if (is3D) {
+    map.easeTo({ pitch:58, bearing:-15, duration:700 });
+    map.setPaintProperty('3d-buildings','fill-extrusion-opacity',0.85);
+  } else {
+    map.easeTo({ pitch:0, bearing:0, duration:700 });
+    map.setPaintProperty('3d-buildings','fill-extrusion-opacity',0);
+  }
+}
+
+// ──────────────────────────────────────────────
+// TIME SCRUBBER
+// ──────────────────────────────────────────────
+function onTimeChange(val) {
+  currentHour = parseFloat(val);
+  const h=Math.floor(currentHour), m=Math.round((currentHour-h)*60);
+  if (document.getElementById('departTime'))
+    document.getElementById('departTime').value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  updateSun();
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing?'⏸':'▶';
+  if (playing) {
+    playInterval = setInterval(() => {
+      currentHour = (currentHour+0.08)%24;
+      if (currentHour<5) currentHour=5;
+      document.getElementById('timeRange').value = currentHour;
+      updateSun();
+    }, 80);
+  } else { clearInterval(playInterval); }
+}
+
+// ──────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────
+let toastT = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ──────────────────────────────────────────────
+// PWA / INSTALL HINT
+// ──────────────────────────────────────────────
+function showInstallHint() {
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone && !localStorage.getItem('km-install-dismissed')) {
+    setTimeout(() => {
+      document.getElementById('installBanner').classList.remove('hidden');
+      document.getElementById('installBanner').querySelector('.install-close').addEventListener('click', () => {
+        localStorage.setItem('km-install-dismissed','1');
+      });
+    }, 3000);
+  }
+}
+
+// ──────────────────────────────────────────────
+// SERVICE WORKER
+// ──────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+// ──────────────────────────────────────────────
+// Shadow update on map move
+// ──────────────────────────────────────────────
+let shadowTimer = null;
+function scheduleShadowUpdate() {
+  clearTimeout(shadowTimer);
+  shadowTimer = setTimeout(updateSun, 300);
+}
+
+// ──────────────────────────────────────────────
+// BOOT
+// ──────────────────────────────────────────────
+initMap();
+// Map move triggers shadow refresh
+setTimeout(() => {
+  if (map) {
+    map.on('moveend', scheduleShadowUpdate);
+    map.on('zoomend', scheduleShadowUpdate);
+  }
+}, 2000);
+
+// Init with search tab
+setTimeout(() => {
+  renderSearchTab();
+  document.getElementById('timeScrubber').classList.add('hidden');
+  updateSun();
+}, 500);
+</script>
+</body>
+</html>
