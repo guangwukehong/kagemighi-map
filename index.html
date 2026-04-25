@@ -9,458 +9,273 @@
 <meta name="theme-color" content="#07111f">
 <link rel="manifest" href="manifest.json">
 <title>影道 KageMichi</title>
-
-<!-- MapLibre GL JS (free, open source, 3D capable) -->
 <link href="https://unpkg.com/maplibre-gl@4.3.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.3.2/dist/maplibre-gl.js"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#07111f;--s1:#0c1b30;--s2:#102038;--s3:#162840;
+  --b1:#1a3050;--b2:#224068;
+  --acc:#f59e0b;--acc2:#38bdf8;--acc3:#34d399;--red:#f87171;
+  --txt:#dde9f8;--mut:#4e6f96;--mut2:#2d4a6a;
+  --fn:'Noto Sans JP',sans-serif;--mo:'DM Mono',monospace;
+  --st:env(safe-area-inset-top,44px);--sb:env(safe-area-inset-bottom,34px);
+  --peek:156px;--r:14px;
+}
+html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fn);background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
 
-:root {
-  --bg: #07111f;
-  --s1: #0c1b30;
-  --s2: #102038;
-  --s3: #162840;
-  --b1: #1a3050;
-  --b2: #224068;
-  --acc: #f59e0b;
-  --acc2: #38bdf8;
-  --acc3: #34d399;
-  --red: #f87171;
-  --txt: #dde9f8;
-  --mut: #4e6f96;
-  --mut2: #2d4a6a;
-  --fn: 'Noto Sans JP', sans-serif;
-  --mo: 'DM Mono', monospace;
-  --st: env(safe-area-inset-top, 44px);
-  --sb: env(safe-area-inset-bottom, 34px);
-  --peek: 160px;
-  --r: 14px;
-}
+/* MAP */
+#map{position:fixed;inset:0;width:100%;height:100%}
+.maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(7,17,31,.7)!important;color:var(--mut)!important}
+.maplibregl-ctrl-group{background:rgba(12,27,48,.95)!important;border:1px solid var(--b1)!important;border-radius:12px!important;overflow:hidden;backdrop-filter:blur(10px)}
+.maplibregl-ctrl-group button{background:transparent!important;color:var(--txt)!important}
+.maplibregl-ctrl-group button:hover{background:rgba(56,189,248,.1)!important}
+.maplibregl-ctrl-group button+button{border-top:1px solid var(--b1)!important}
+.maplibregl-popup-content{background:var(--s2)!important;border:1px solid var(--b2)!important;border-radius:12px!important;color:var(--txt)!important;font-family:var(--fn)!important;font-size:13px!important;padding:10px 14px!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important}
+.maplibregl-popup-tip{border-top-color:var(--s2)!important}
+.maplibregl-user-location-dot{background-color:var(--acc2)!important;box-shadow:0 0 0 3px rgba(56,189,248,.3)!important}
 
-html, body { height:100%; width:100%; overflow:hidden; font-family:var(--fn); background:var(--bg); color:var(--txt); -webkit-font-smoothing:antialiased; }
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;z-index:30;padding-top:var(--st);background:linear-gradient(180deg,rgba(7,17,31,.98) 65%,transparent);pointer-events:none}
+.tb-in{display:flex;align-items:center;gap:9px;padding:8px 14px 10px;pointer-events:auto}
+.logo{display:flex;flex-direction:column;align-items:center;flex-shrink:0;cursor:pointer;gap:1px}
+.logo-k{font-size:18px;font-weight:900;line-height:1}
+.logo-k em{color:var(--acc);font-style:normal}
+.logo-s{font-size:8px;color:var(--mut);letter-spacing:.08em;font-weight:400}
+.tb-sw{flex:1;position:relative}
+.tb-s{width:100%;background:rgba(12,27,48,.96);border:1px solid var(--b2);border-radius:var(--r);padding:10px 38px 10px 14px;color:var(--txt);font-family:var(--fn);font-size:14px;outline:none;-webkit-appearance:none;transition:border-color .2s}
+.tb-s:focus{border-color:var(--acc2)}
+.tb-s::placeholder{color:var(--mut)}
+.tb-si{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+.ib{width:42px;height:42px;flex-shrink:0;background:rgba(12,27,48,.96);border:1px solid var(--b2);border-radius:var(--r);color:var(--txt);font-size:15px;font-weight:700;font-family:var(--fn);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(12px);transition:all .18s}
+.ib:active{transform:scale(.9);background:var(--s3)}
+.ib.on{border-color:var(--acc2);color:var(--acc2);background:rgba(56,189,248,.1)}
 
-/* ── MAP ── */
-#map { position:fixed; inset:0; width:100%; height:100%; }
+/* MODE BAR */
+#modebar{position:fixed;top:calc(var(--st) + 62px);left:14px;right:14px;z-index:25;display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#modebar::-webkit-scrollbar{display:none}
+.mp{display:flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(7,17,31,.93);border:1px solid var(--b2);border-radius:20px;font-size:12px;font-weight:700;color:var(--mut);cursor:pointer;backdrop-filter:blur(10px);transition:all .18s;white-space:nowrap;flex-shrink:0}
+.mp.on{border-color:var(--acc2);color:var(--acc2);background:rgba(56,189,248,.12)}
+.mp:active{transform:scale(.94)}
 
-.maplibregl-ctrl-attrib { font-size:9px !important; background:rgba(7,17,31,0.7) !important; color:var(--mut) !important; }
-.maplibregl-ctrl-attrib a { color:var(--mut2) !important; }
-.maplibregl-ctrl-group { background:rgba(12,27,48,0.92) !important; border:1px solid var(--b1) !important; border-radius:12px !important; overflow:hidden; backdrop-filter:blur(10px); }
-.maplibregl-ctrl-group button { background:transparent !important; color:var(--txt) !important; border:none !important; }
-.maplibregl-ctrl-group button:hover { background:rgba(56,189,248,0.1) !important; }
-.maplibregl-ctrl-group button + button { border-top:1px solid var(--b1) !important; }
-.maplibregl-popup-content { background:var(--s2) !important; border:1px solid var(--b2) !important; border-radius:12px !important; color:var(--txt) !important; font-family:var(--fn) !important; font-size:13px !important; padding:10px 14px !important; box-shadow:0 8px 32px rgba(0,0,0,0.6) !important; }
-.maplibregl-popup-tip { border-top-color:var(--s2) !important; }
+/* FABS */
+.fab{position:fixed;z-index:25;width:46px;height:46px;background:rgba(7,17,31,.95);border:1px solid var(--b2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(14px);box-shadow:0 4px 18px rgba(0,0,0,.45);transition:all .18s;font-size:19px;color:var(--txt)}
+.fab:active{transform:scale(.9)}
+#locFab{right:14px;bottom:calc(var(--peek) + var(--sb) + 76px);color:var(--acc2)}
+#resetFab{right:14px;bottom:calc(var(--peek) + var(--sb) + 130px)}
 
-/* ── TOPBAR ── */
-#topbar {
-  position:fixed; top:0; left:0; right:0; z-index:30;
-  padding-top:var(--st);
-  background:linear-gradient(180deg,rgba(7,17,31,0.98) 60%,transparent);
-  pointer-events:none;
-}
-.tb-inner {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 14px 10px;
-  pointer-events:auto;
-}
-.logo { display:flex; flex-direction:column; align-items:center; flex-shrink:0; cursor:pointer; gap:1px; }
-.logo-k { font-size:18px; font-weight:900; line-height:1; letter-spacing:-0.02em; }
-.logo-k em { color:var(--acc); font-style:normal; }
-.logo-s { font-size:8px; color:var(--mut); font-weight:300; letter-spacing:0.08em; }
+/* TIME BAR */
+#timeBar{position:fixed;z-index:25;bottom:calc(var(--peek) + var(--sb) + 12px);left:14px;right:14px;background:rgba(7,17,31,.97);border:1px solid var(--b2);border-radius:16px;padding:11px 16px 9px;backdrop-filter:blur(18px);box-shadow:0 4px 24px rgba(0,0,0,.5);transition:opacity .3s,transform .3s}
+#timeBar.hide{opacity:0;transform:translateY(8px);pointer-events:none}
+.tbr{display:flex;align-items:center;gap:11px}
+.tbt{font-family:var(--mo);font-size:22px;color:var(--acc);font-weight:500;min-width:56px}
+.tbsl{flex:1}
+input.sl{-webkit-appearance:none;width:100%;height:4px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer}
+input.sl::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--acc);cursor:pointer;box-shadow:0 0 14px rgba(245,158,11,.55)}
+.tbplay{width:36px;height:36px;flex-shrink:0;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);border-radius:10px;color:var(--acc);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s}
+.tbplay:active{transform:scale(.9)}
+.tbsun{font-size:10px;color:var(--mut);font-family:var(--mo);margin-top:5px;text-align:center}
 
-.tb-search-wrap { flex:1; position:relative; }
-.tb-search {
-  width:100%;
-  background:rgba(12,27,48,0.94);
-  border:1px solid var(--b2);
-  border-radius:var(--r);
-  padding:10px 40px 10px 14px;
-  color:var(--txt); font-family:var(--fn); font-size:14px;
-  outline:none; -webkit-appearance:none;
-  backdrop-filter:blur(12px);
-  transition:border-color 0.2s;
-}
-.tb-search:focus { border-color:var(--acc2); }
-.tb-search::placeholder { color:var(--mut); }
-.tb-search-ic { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none; }
+/* SHEET */
+#sheet{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--s1);border-radius:22px 22px 0 0;border-top:1px solid var(--b2);box-shadow:0 -12px 48px rgba(0,0,0,.7);display:flex;flex-direction:column;max-height:91vh;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
+#sheet.peek{transform:translateY(calc(100% - var(--peek) - var(--sb)))}
+#sheet.half{transform:translateY(32%)}
+#sheet.full{transform:translateY(0)}
+.sh-hdl{width:40px;height:5px;background:var(--b2);border-radius:3px;margin:10px auto 0;cursor:grab;flex-shrink:0}
+.sh-tabs{display:flex;border-bottom:1px solid var(--b1);padding:0 16px;flex-shrink:0;margin-top:6px}
+.sh-tab{flex:1;padding:10px 2px;font-size:12px;font-weight:700;color:var(--mut);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .18s}
+.sh-tab.on{color:var(--acc2);border-bottom-color:var(--acc2)}
+.sh-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(var(--sb) + 16px)}
+.sh-body::-webkit-scrollbar{display:none}
 
-.ib {
-  width:42px; height:42px; flex-shrink:0;
-  background:rgba(12,27,48,0.94);
-  border:1px solid var(--b2); border-radius:var(--r);
-  color:var(--txt); font-size:18px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; backdrop-filter:blur(12px); transition:all 0.18s;
-}
-.ib:active { transform:scale(0.9); background:var(--s3); }
-.ib.on { border-color:var(--acc2); color:var(--acc2); background:rgba(56,189,248,0.1); }
-
-/* ── MODE BAR (like Google Maps) ── */
-#modebar {
-  position:fixed;
-  top:calc(var(--st) + 62px);
-  left:14px; right:14px; z-index:25;
-  display:flex; gap:8px;
-  pointer-events:none;
-}
-#modebar > * { pointer-events:auto; }
-.mode-pill {
-  display:flex; align-items:center; gap:6px;
-  padding:7px 14px;
-  background:rgba(7,17,31,0.92);
-  border:1px solid var(--b2); border-radius:20px;
-  font-size:12px; font-weight:700; color:var(--mut);
-  cursor:pointer; backdrop-filter:blur(10px); transition:all 0.18s;
-  white-space:nowrap;
-}
-.mode-pill.on { border-color:var(--acc2); color:var(--acc2); background:rgba(56,189,248,0.12); }
-.mode-pill:active { transform:scale(0.95); }
-
-.view-pills { margin-left:auto; display:flex; gap:6px; }
-
-/* ── FLOATING BUTTONS ── */
-.fab {
-  position:fixed; z-index:25;
-  width:46px; height:46px;
-  background:rgba(7,17,31,0.93);
-  border:1px solid var(--b2); border-radius:var(--r);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; backdrop-filter:blur(12px);
-  box-shadow:0 4px 18px rgba(0,0,0,0.45); transition:all 0.18s;
-  font-size:20px; color:var(--txt);
-}
-.fab:active { transform:scale(0.91); }
-#locFab { right:14px; bottom:calc(var(--peek) + var(--sb) + 80px); color:var(--acc2); }
-#compassFab { right:14px; bottom:calc(var(--peek) + var(--sb) + 134px); }
-
-/* ── TIME BAR ── */
-#timeBar {
-  position:fixed; z-index:25;
-  bottom:calc(var(--peek) + var(--sb) + 12px);
-  left:14px; right:14px;
-  background:rgba(7,17,31,0.95);
-  border:1px solid var(--b2); border-radius:16px;
-  padding:11px 16px 9px;
-  backdrop-filter:blur(16px);
-  box-shadow:0 4px 24px rgba(0,0,0,0.5);
-  transition:opacity 0.3s,transform 0.3s;
-}
-#timeBar.hide { opacity:0; transform:translateY(8px); pointer-events:none; }
-.tbr { display:flex; align-items:center; gap:11px; }
-.tb-t { font-family:var(--mo); font-size:22px; color:var(--acc); font-weight:500; min-width:56px; }
-.tb-sl { flex:1; }
-input.sl {
-  -webkit-appearance:none; width:100%; height:4px;
-  background:var(--b2); border-radius:2px; outline:none; cursor:pointer;
-}
-input.sl::-webkit-slider-thumb {
-  -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
-  background:var(--acc); cursor:pointer; box-shadow:0 0 14px rgba(245,158,11,0.55);
-}
-.tb-play {
-  width:36px; height:36px; flex-shrink:0;
-  background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35);
-  border-radius:10px; color:var(--acc); font-size:14px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:all 0.18s;
-}
-.tb-play:active { transform:scale(0.9); }
-.tb-sun { font-size:10px; color:var(--mut); font-family:var(--mo); margin-top:5px; text-align:center; }
-
-/* ── BOTTOM SHEET ── */
-#sheet {
-  position:fixed; bottom:0; left:0; right:0; z-index:40;
-  background:var(--s1);
-  border-radius:22px 22px 0 0;
-  border-top:1px solid var(--b2);
-  box-shadow:0 -12px 48px rgba(0,0,0,0.7);
-  display:flex; flex-direction:column;
-  max-height:92vh;
-  transition:transform 0.38s cubic-bezier(.32,.72,0,1);
-  will-change:transform;
-}
-#sheet.peek { transform:translateY(calc(100% - var(--peek) - var(--sb))); }
-#sheet.half { transform:translateY(32%); }
-#sheet.full { transform:translateY(0); }
-
-.sh-handle {
-  width:40px; height:5px; background:var(--b2); border-radius:3px;
-  margin:10px auto 0; cursor:grab; flex-shrink:0;
-}
-.sh-tabs {
-  display:flex; border-bottom:1px solid var(--b1);
-  padding:0 16px; flex-shrink:0; margin-top:6px;
-}
-.sh-tab {
-  flex:1; padding:10px 2px; font-size:12px; font-weight:700;
-  color:var(--mut); text-align:center; cursor:pointer;
-  border-bottom:2px solid transparent; transition:all 0.18s;
-}
-.sh-tab.on { color:var(--acc2); border-bottom-color:var(--acc2); }
-.sh-body {
-  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-  padding:14px 16px calc(var(--sb) + 16px);
-}
-.sh-body::-webkit-scrollbar { display:none; }
-
-/* ── SEARCH INPUTS (Google Maps style) ── */
-.srch-box {
-  background:var(--s2); border:1px solid var(--b2);
-  border-radius:16px; overflow:visible;
-  position:relative; margin-bottom:10px;
-}
-.srch-row {
-  display:flex; align-items:center; gap:10px;
-  padding:12px 14px;
-}
-.srch-row + .srch-row { border-top:1px solid var(--b1); }
-.srch-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
-.dot-s { background:var(--acc3); box-shadow:0 0 8px var(--acc3); }
-.dot-e { background:var(--red); box-shadow:0 0 8px var(--red); }
-.srch-line { width:2px; height:16px; background:var(--b2); margin-left:4px; }
-.srch-inp {
-  flex:1; background:none; border:none; outline:none;
-  color:var(--txt); font-family:var(--fn); font-size:15px; -webkit-appearance:none;
-}
-.srch-inp::placeholder { color:var(--mut); }
-.srch-ic { font-size:18px; cursor:pointer; flex-shrink:0; transition:transform 0.18s; }
-.srch-ic:active { transform:scale(0.88); }
+/* SEARCH */
+.sbox{background:var(--s2);border:1px solid var(--b2);border-radius:16px;overflow:visible;position:relative;margin-bottom:10px}
+.srow{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.srow+.srow{border-top:1px solid var(--b1)}
+.sdot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.ds{background:var(--acc3);box-shadow:0 0 8px var(--acc3)}
+.de{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sinp{flex:1;background:none;border:none;outline:none;color:var(--txt);font-family:var(--fn);font-size:15px;-webkit-appearance:none}
+.sinp::placeholder{color:var(--mut)}
+.sic{font-size:17px;cursor:pointer;flex-shrink:0;transition:transform .18s}
+.sic:active{transform:scale(.86)}
 
 /* Autocomplete */
-.ac-wrap {
-  position:absolute; top:calc(100% + 4px); left:0; right:0;
-  background:var(--s3); border:1px solid var(--b2); border-radius:14px;
-  overflow:hidden; z-index:200;
-  box-shadow:0 12px 36px rgba(0,0,0,0.6); display:none;
-}
-.ac-wrap.on { display:block; }
-.ac-i {
-  display:flex; align-items:center; gap:10px;
-  padding:11px 14px; border-bottom:1px solid var(--b1);
-  cursor:pointer; transition:background 0.14s;
-}
-.ac-i:last-child { border-bottom:none; }
-.ac-i:active { background:rgba(56,189,248,0.08); }
-.ac-ico { font-size:16px; flex-shrink:0; }
-.ac-n { font-size:14px; font-weight:700; }
-.ac-s { font-size:11px; color:var(--mut); margin-top:1px; }
+.ac{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s3);border:1px solid var(--b2);border-radius:14px;overflow:hidden;z-index:200;box-shadow:0 12px 36px rgba(0,0,0,.6);display:none}
+.ac.on{display:block}
+.aci{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background .14s}
+.aci:last-child{border-bottom:none}
+.aci:active{background:rgba(56,189,248,.08)}
+.acico{font-size:15px;flex-shrink:0}
+.acn{font-size:14px;font-weight:700}
+.acs{font-size:11px;color:var(--mut);margin-top:1px}
 
-/* Time/date row */
-.td-row { display:flex; gap:10px; margin-bottom:12px; }
-.td-w { flex:1; }
-.td-w label { font-size:10px; color:var(--mut); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:4px; }
-.td-inp {
-  width:100%; background:var(--s2); border:1px solid var(--b2); border-radius:11px;
-  padding:10px 11px; color:var(--txt); font-family:var(--mo); font-size:14px;
-  outline:none; -webkit-appearance:none; transition:border-color 0.2s;
-}
-.td-inp:focus { border-color:var(--acc); }
+/* Time row */
+.trow{display:flex;gap:10px;margin-bottom:12px}
+.tw{flex:1}
+.tw label{font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+.ti{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:11px;padding:10px 11px;color:var(--txt);font-family:var(--mo);font-size:14px;outline:none;-webkit-appearance:none;transition:border-color .2s}
+.ti:focus{border-color:var(--acc)}
 
-/* GO button */
-.go-btn {
-  width:100%; padding:15px;
-  background:linear-gradient(135deg,var(--acc),#d97706);
-  border:none; border-radius:var(--r);
-  color:#07111f; font-family:var(--fn); font-size:16px; font-weight:900;
-  cursor:pointer; letter-spacing:0.02em;
-  transition:all 0.18s; -webkit-appearance:none;
-  box-shadow:0 4px 20px rgba(245,158,11,0.3);
-}
-.go-btn:active { transform:scale(0.97); opacity:0.88; }
+/* Go button */
+.go{width:100%;padding:15px;background:linear-gradient(135deg,var(--acc),#d97706);border:none;border-radius:var(--r);color:#07111f;font-family:var(--fn);font-size:16px;font-weight:900;cursor:pointer;letter-spacing:.02em;transition:all .18s;-webkit-appearance:none;box-shadow:0 4px 20px rgba(245,158,11,.3)}
+.go:active{transform:scale(.97);opacity:.88}
 
-/* Section label */
-.sec {
-  font-size:10px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase;
-  color:var(--mut); margin:14px 0 10px;
-  display:flex; align-items:center; gap:8px;
-}
-.sec::after { content:''; flex:1; height:1px; background:var(--b1); }
+/* Section */
+.sec{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);margin:14px 0 10px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--b1)}
 
 /* Route card */
-.rcard {
-  background:var(--s2); border:1px solid var(--b2); border-radius:16px;
-  padding:15px 15px 13px; margin-bottom:12px;
-  cursor:pointer; position:relative; overflow:hidden; transition:all 0.2s;
-}
-.rcard::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:4px 0 0 4px; }
-.rcard.shortest::before { background:var(--acc3); }
-.rcard.shadiest::before { background:var(--acc2); }
-.rcard.sel { border-color:var(--acc2); background:rgba(56,189,248,0.05); }
-.rcard:active { transform:scale(0.985); }
+.rcard{background:var(--s2);border:1px solid var(--b2);border-radius:16px;padding:15px 15px 13px;margin-bottom:12px;cursor:pointer;position:relative;overflow:hidden;transition:all .2s}
+.rcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.rcard.shortest::before{background:var(--acc3)}
+.rcard.shadiest::before{background:var(--acc2)}
+.rcard.sel{border-color:var(--acc2);background:rgba(56,189,248,.05)}
+.rcard:active{transform:scale(.985)}
+.rch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rct{font-size:13px;font-weight:900;display:flex;align-items:center;gap:6px}
+.rct.shortest{color:var(--acc3)}
+.rct.shadiest{color:var(--acc2)}
+.rbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+.bs{background:rgba(52,211,153,.14);color:var(--acc3)}
+.bsh{background:rgba(56,189,248,.14);color:var(--acc2)}
+.rcstats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--b1);padding-top:10px}
+.rcst{text-align:center;padding:2px 0}
+.rcst+.rcst{border-left:1px solid var(--b1)}
+.rcv{font-family:var(--mo);font-size:20px;line-height:1}
+.rcu{font-size:10px;color:var(--mut)}
+.rcl{font-size:10px;color:var(--mut);margin-top:3px}
+.sbar{height:5px;background:var(--b1);border-radius:3px;overflow:hidden;margin-top:11px}
+.sbf{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--acc2),rgba(56,189,248,.3));transition:width .8s cubic-bezier(.4,0,.2,1)}
+.slbl{font-size:11px;color:var(--mut);margin-top:5px}
+.rbtns{margin-top:10px;display:flex;gap:8px}
+.rbtn{flex:1;padding:9px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fn);transition:all .18s}
+.rbtn:active{transform:scale(.95)}
+.rbtn-nav{background:rgba(56,189,248,.12);border:1px solid var(--acc2);color:var(--acc2)}
+.rbtn-map{background:var(--s3);border:1px solid var(--b2);color:var(--txt)}
 
-.rc-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-.rc-t { font-size:13px; font-weight:900; display:flex; align-items:center; gap:6px; }
-.rc-t.shortest { color:var(--acc3); }
-.rc-t.shadiest { color:var(--acc2); }
-.rc-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; }
-.b-s { background:rgba(52,211,153,0.14); color:var(--acc3); }
-.b-sh { background:rgba(56,189,248,0.14); color:var(--acc2); }
-
-.rc-stats { display:grid; grid-template-columns:1fr 1fr 1fr; border-top:1px solid var(--b1); padding-top:10px; }
-.rc-stat { text-align:center; padding:2px 0; }
-.rc-stat+.rc-stat { border-left:1px solid var(--b1); }
-.rc-v { font-family:var(--mo); font-size:20px; line-height:1; }
-.rc-u { font-size:10px; color:var(--mut); }
-.rc-l { font-size:10px; color:var(--mut); margin-top:3px; }
-
-.sbar { height:5px; background:var(--b1); border-radius:3px; overflow:hidden; margin-top:11px; }
-.sbar-f { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--acc2),rgba(56,189,248,0.3)); transition:width 0.8s cubic-bezier(.4,0,.2,1); }
-.slbl { font-size:11px; color:var(--mut); margin-top:5px; }
-
-/* Step list */
-.steps { margin-top:12px; border-top:1px solid var(--b1); padding-top:10px; display:none; }
-.rcard.sel .steps { display:block; }
-.step { display:flex; align-items:flex-start; gap:10px; padding:7px 0; border-bottom:1px solid var(--b1); }
-.step:last-child { border-bottom:none; }
-.step-ic { width:28px; height:28px; background:var(--s3); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
-.step-tx { flex:1; }
-.step-name { font-size:13px; font-weight:500; line-height:1.3; }
-.step-dir { font-size:11px; color:var(--mut); margin-top:2px; }
-.step-d { font-family:var(--mo); font-size:11px; color:var(--mut); flex-shrink:0; margin-top:4px; }
+/* Step */
+.steps{margin-top:12px;border-top:1px solid var(--b1);padding-top:10px;display:none}
+.rcard.sel .steps{display:block}
+.step{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1)}
+.step:last-child{border-bottom:none}
+.stic{width:28px;height:28px;background:var(--s3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sttx{flex:1}
+.stname{font-size:13px;font-weight:500}
+.stdir{font-size:11px;color:var(--mut);margin-top:1px}
+.std{font-family:var(--mo);font-size:11px;color:var(--mut);flex-shrink:0}
 
 /* Sun card */
-.sun-c {
-  background:var(--s2); border:1px solid var(--b1); border-radius:14px;
-  padding:13px 14px; margin-bottom:12px;
-  display:flex; gap:12px; align-items:center;
-}
-.sun-ic { font-size:26px; flex-shrink:0; }
-.sun-rows { flex:1; }
-.sun-r { display:flex; justify-content:space-between; margin-bottom:3px; }
-.sun-r:last-child { margin-bottom:0; }
-.sun-l { font-size:11px; color:var(--mut); }
-.sun-v { font-family:var(--mo); font-size:12px; color:var(--acc); }
+.sunc{background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:13px 14px;margin-bottom:12px;display:flex;gap:12px;align-items:center}
+.sunic{font-size:26px;flex-shrink:0}
+.sunrows{flex:1}
+.sunr{display:flex;justify-content:space-between;margin-bottom:3px}
+.sunr:last-child{margin-bottom:0}
+.sunl{font-size:11px;color:var(--mut)}
+.sunv{font-family:var(--mo);font-size:12px;color:var(--acc)}
 
 /* Sun tab */
-.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-.stat-b { background:var(--s3); border:1px solid var(--b1); border-radius:12px; padding:13px; text-align:center; }
-.stat-v { font-family:var(--mo); font-size:20px; color:var(--acc); }
-.stat-l { font-size:10px; color:var(--mut); margin-top:4px; }
-.sea-b { background:var(--s2); border:1px solid var(--b1); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
-.sea-h { display:flex; justify-content:space-between; margin-bottom:7px; }
-.sea-n { font-size:13px; font-weight:700; }
-.sea-v { font-family:var(--mo); font-size:12px; color:var(--acc); }
-.sea-tr { display:flex; align-items:center; gap:6px; }
-.sea-tm { font-size:10px; color:var(--mut); font-family:var(--mo); width:38px; }
-.sea-bar { flex:1; height:5px; background:var(--b1); border-radius:3px; overflow:hidden; }
-.sea-fill { height:100%; background:linear-gradient(90deg,var(--acc),var(--acc2)); border-radius:3px; }
-.sea-info { font-size:10px; color:var(--mut); margin-top:5px; text-align:center; }
-.note { font-size:11px; color:var(--mut); line-height:1.7; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.12); border-radius:10px; padding:11px 13px; margin-top:6px; }
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sb{background:var(--s3);border:1px solid var(--b1);border-radius:12px;padding:13px;text-align:center}
+.sbv{font-family:var(--mo);font-size:20px;color:var(--acc)}
+.sbl{font-size:10px;color:var(--mut);margin-top:4px}
+.seab{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.seah{display:flex;justify-content:space-between;margin-bottom:7px}
+.sean{font-size:13px;font-weight:700}
+.seav{font-family:var(--mo);font-size:12px;color:var(--acc)}
+.seatr{display:flex;align-items:center;gap:6px}
+.seatm{font-size:10px;color:var(--mut);font-family:var(--mo);width:38px}
+.seabar{flex:1;height:5px;background:var(--b1);border-radius:3px;overflow:hidden}
+.seafill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:3px}
+.seainfo{font-size:10px;color:var(--mut);margin-top:5px;text-align:center}
+.note{font-size:11px;color:var(--mut);line-height:1.7;background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.12);border-radius:10px;padding:11px 13px;margin-top:6px}
 
-/* Empty state */
-.empty { text-align:center; padding:30px 16px; }
-.empty .ei { font-size:40px; margin-bottom:12px; }
-.empty .et { font-size:15px; font-weight:700; color:var(--mut2); margin-bottom:6px; }
-.empty .es { font-size:12px; color:var(--mut); line-height:1.7; }
+/* Empty */
+.empty{text-align:center;padding:30px 16px}
+.empty .ei{font-size:38px;margin-bottom:12px}
+.empty .et{font-size:15px;font-weight:700;color:var(--mut2);margin-bottom:6px}
+.empty .es{font-size:12px;color:var(--mut);line-height:1.7}
 
 /* Toast */
-#toast {
-  position:fixed; top:calc(var(--st) + 68px); left:50%; transform:translateX(-50%);
-  z-index:100; background:rgba(12,27,48,0.97); border:1px solid var(--b2);
-  border-radius:12px; padding:10px 18px; font-size:13px; white-space:nowrap;
-  opacity:0; pointer-events:none; transition:opacity 0.25s; backdrop-filter:blur(16px);
-  box-shadow:0 4px 24px rgba(0,0,0,0.5);
-}
-#toast.on { opacity:1; }
+#toast{position:fixed;top:calc(var(--st) + 68px);left:50%;transform:translateX(-50%);z-index:100;background:rgba(12,27,48,.98);border:1px solid var(--b2);border-radius:12px;padding:10px 18px;font-size:13px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(16px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
+#toast.on{opacity:1}
 
-/* Navigation mode (turn-by-turn) */
-#navBar {
-  position:fixed; top:0; left:0; right:0; z-index:50;
-  padding-top:var(--st);
-  background:rgba(7,17,31,0.97);
-  border-bottom:1px solid var(--b2);
-  backdrop-filter:blur(16px);
-  display:none;
-}
-#navBar.on { display:block; }
-.nav-inner { display:flex; align-items:center; gap:12px; padding:10px 16px 12px; }
-.nav-ic { font-size:32px; flex-shrink:0; }
-.nav-info { flex:1; }
-.nav-dir { font-size:17px; font-weight:700; }
-.nav-road { font-size:12px; color:var(--mut); margin-top:2px; }
-.nav-dist { font-family:var(--mo); font-size:22px; color:var(--acc2); font-weight:500; flex-shrink:0; }
-.nav-close { font-size:20px; cursor:pointer; padding:4px; }
+/* Nav bar */
+#navBar{position:fixed;top:0;left:0;right:0;z-index:50;padding-top:var(--st);background:rgba(7,17,31,.98);border-bottom:1px solid var(--b2);backdrop-filter:blur(16px);display:none}
+#navBar.on{display:block}
+.navin{display:flex;align-items:center;gap:12px;padding:10px 16px 12px}
+.navic{font-size:30px;flex-shrink:0;width:44px;text-align:center}
+.navinfo{flex:1}
+.navdir{font-size:17px;font-weight:700}
+.navroad{font-size:12px;color:var(--mut);margin-top:2px}
+.navdist{font-family:var(--mo);font-size:22px;color:var(--acc2);font-weight:500;flex-shrink:0}
+.navx{font-size:20px;cursor:pointer;padding:4px;flex-shrink:0}
+.navstep{display:flex;align-items:center;gap:8px;padding:8px 16px 12px;background:rgba(56,189,248,.05);border-top:1px solid var(--b1);font-size:12px;color:var(--mut)}
+.navstepic{font-size:14px}
 
-/* Install banner */
-#installBanner {
-  position:fixed; bottom:0; left:0; right:0; z-index:200;
-  background:var(--s1); border-top:1px solid var(--b2);
-  padding:14px 18px calc(var(--sb) + 14px);
-  display:flex; gap:12px; align-items:center;
-  transform:translateY(100%); transition:transform 0.4s;
-  box-shadow:0 -8px 32px rgba(0,0,0,0.6);
-}
-#installBanner.on { transform:translateY(0); }
-.ib-t { font-size:14px; font-weight:700; }
-.ib-s { font-size:11px; color:var(--mut); margin-top:2px; }
-.ib-steps { font-size:11px; color:var(--acc); margin-top:3px; }
-.ib-x { margin-left:auto; padding:8px 12px; background:none; border:1px solid var(--b2); border-radius:8px; color:var(--mut); font-size:12px; cursor:pointer; flex-shrink:0; }
+/* Install */
+#installBanner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--s1);border-top:1px solid var(--b2);padding:14px 18px calc(var(--sb) + 14px);display:flex;gap:12px;align-items:center;transform:translateY(100%);transition:transform .4s;box-shadow:0 -8px 32px rgba(0,0,0,.6)}
+#installBanner.on{transform:translateY(0)}
+.ibt{font-size:14px;font-weight:700}
+.ibs{font-size:11px;color:var(--mut);margin-top:2px}
+.ibsteps{font-size:11px;color:var(--acc);margin-top:3px}
+.ibx{margin-left:auto;padding:8px 12px;background:none;border:1px solid var(--b2);border-radius:8px;color:var(--mut);font-size:12px;cursor:pointer;flex-shrink:0}
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div id="topbar">
-  <div class="tb-inner">
+  <div class="tb-in">
     <div class="logo" onclick="openSheet('search')">
       <div class="logo-k">影<em>道</em></div>
       <div class="logo-s">KageMichi</div>
     </div>
-    <div class="tb-search-wrap">
-      <input class="tb-search" id="quickSearch" type="text" placeholder="場所・住所を検索..." autocomplete="off"
-        onfocus="openSheet('search');setTimeout(()=>{document.getElementById('endInp')?.focus()},250)">
-      <span class="tb-search-ic">🔍</span>
+    <div class="tb-sw">
+      <input class="tb-s" id="quickS" type="text" placeholder="場所・住所を検索..." autocomplete="off"
+        onfocus="openSheet('search');setTimeout(()=>document.getElementById('endInp')?.focus(),200)">
+      <span class="tb-si">🔍</span>
     </div>
-    <div class="ib" id="btn3d" onclick="toggle3D()" title="3D切替">3D</div>
+    <div class="ib" id="btn3d" onclick="toggle3D()">3D</div>
   </div>
 </div>
 
-<!-- MODE BAR -->
 <div id="modebar">
-  <div class="mode-pill on" id="modeWalk" onclick="setMode('walk')">🚶 徒歩</div>
-  <div class="mode-pill" id="modeCycle" onclick="setMode('cycle')">🚲 自転車</div>
-  <div class="mode-pill" id="modeCar" onclick="setMode('car')">🚗 車</div>
+  <div class="mp on" id="modeWalk" onclick="setMode('walk')">🚶 徒歩</div>
+  <div class="mp" id="modeCycle" onclick="setMode('cycle')">🚲 自転車</div>
+  <div class="mp" id="modeCar" onclick="setMode('car')">🚗 車</div>
 </div>
 
-<!-- MAP -->
 <div id="map"></div>
 
-<!-- NAV BAR (turn-by-turn) -->
+<!-- Nav -->
 <div id="navBar">
-  <div class="nav-inner">
-    <div class="nav-ic" id="navIc">↑</div>
-    <div class="nav-info">
-      <div class="nav-dir" id="navDir">出発します</div>
-      <div class="nav-road" id="navRoad"></div>
+  <div class="navin">
+    <div class="navic" id="navIc">↑</div>
+    <div class="navinfo">
+      <div class="navdir" id="navDir">ナビ中</div>
+      <div class="navroad" id="navRoad"></div>
     </div>
-    <div class="nav-dist" id="navDist">--</div>
-    <div class="nav-close" onclick="stopNav()">✕</div>
+    <div class="navdist" id="navDist">--</div>
+    <div class="navx" onclick="stopNav()">✕</div>
   </div>
+  <div class="navstep" id="navNext"></div>
 </div>
 
-<!-- FLOATING BUTTONS -->
-<button class="fab" id="compassFab" onclick="resetBearing()">🧭</button>
+<button class="fab" id="resetFab" onclick="map.easeTo({bearing:0,pitch:0,duration:500})">🧭</button>
 <button class="fab" id="locFab" onclick="geolocate()">📍</button>
 
-<!-- TIME BAR -->
 <div id="timeBar" class="hide">
   <div class="tbr">
-    <button class="tb-play" id="playBtn" onclick="togglePlay()">▶</button>
-    <div class="tb-t" id="tbTime">09:00</div>
-    <div class="tb-sl">
-      <input class="sl" type="range" id="tRange" min="5" max="20" step="0.25" value="9" oninput="onTime(this.value)">
-    </div>
+    <button class="tbplay" id="playBtn" onclick="togglePlay()">▶</button>
+    <div class="tbt" id="tbTime">09:00</div>
+    <div class="tbsl"><input class="sl" type="range" id="tRange" min="5" max="20" step="0.25" value="9" oninput="onTime(this.value)"></div>
   </div>
-  <div class="tb-sun" id="tbSun">☀️ 高度 45° — 南</div>
+  <div class="tbsun" id="tbSun">☀️ 高度 45° — 南</div>
 </div>
 
-<!-- BOTTOM SHEET -->
 <div id="sheet" class="peek">
-  <div class="sh-handle" id="handle"></div>
+  <div class="sh-hdl" id="handle"></div>
   <div class="sh-tabs">
     <div class="sh-tab on" id="tab-search"  onclick="setTab('search')">🔍 検索</div>
     <div class="sh-tab"    id="tab-results" onclick="setTab('results')">🗺️ ルート</div>
@@ -469,668 +284,458 @@ input.sl::-webkit-slider-thumb {
   <div class="sh-body" id="shBody"></div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- INSTALL BANNER -->
 <div id="installBanner">
   <span style="font-size:28px">影</span>
   <div>
-    <div class="ib-t">ホーム画面に追加</div>
-    <div class="ib-s">アプリとして使えます</div>
-    <div class="ib-steps">Safari → 共有ボタン → ホーム画面に追加</div>
+    <div class="ibt">ホーム画面に追加</div>
+    <div class="ibs">アプリとして使えます</div>
+    <div class="ibsteps">Safari → 共有 → ホーム画面に追加</div>
   </div>
-  <button class="ib-x" onclick="dismissInstall()">✕</button>
+  <button class="ibx" onclick="dismissInstall()">✕</button>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-// CONSTANTS
-// ══════════════════════════════════════════
-const TOKYO = [139.7671, 35.6812];
-const LAT_R = 35.68 * Math.PI / 180;
-const DIRS = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
-const OSRM_PROFILES = { walk:'foot', cycle:'bike', car:'car' };
+// ── CONSTANTS ──────────────────────────────
+const TOKYO=[139.7671,35.6812];
+const LAT_R=35.68*Math.PI/180;
+const DIRS=['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+const PROFILES={walk:'foot',cycle:'bike',car:'car'};
 
-// ══════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════
-let map;
-let startLL = null, endLL = null;
-let startMk = null, endMk = null;
-let routeLayerIds = [];
-let routes = [], activeR = 0;
-let currentHour, currentMonth;
-let tab = 'search', shPos = 'peek';
-let playing = false, playInv = null;
-let is3D = false;
-let travelMode = 'walk';
-let navSteps = [], navIdx = 0;
-let shadowTimer = null;
-let buildingsFetched = false;
+// ── STATE ──────────────────────────────────
+let map,startLL=null,endLL=null;
+let routes=[],activeR=0;
+let tab='search',shPos='peek';
+let playing=false,playInv=null;
+let is3D=false,travelMode='walk';
+let navSteps=[],navIdx=0;
+let acT={};
 
-const now = new Date();
-currentHour = now.getHours() + now.getMinutes()/60;
-currentMonth = now.getMonth() + 1;
-const todayStr = now.toISOString().split('T')[0];
-const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+const now=new Date();
+let currentHour=now.getHours()+now.getMinutes()/60;
+let currentMonth=now.getMonth()+1;
+const todayStr=now.toISOString().split('T')[0];
+const nowTime=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-// ══════════════════════════════════════════
-// MAP INIT
-// ══════════════════════════════════════════
-function initMap() {
-  map = new maplibregl.Map({
-    container: 'map',
-    style: {
-      version: 8,
-      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-      sources: {
-        'osm': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution: '© OpenStreetMap contributors',
-          maxzoom: 19
-        },
-        'osm-vector': {
-          type: 'vector',
-          url: 'https://tiles.openfreemap.org/planet'
+// ── MAP ────────────────────────────────────
+function initMap(){
+  map=new maplibregl.Map({
+    container:'map',
+    style:{
+      version:8,
+      glyphs:'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+      sources:{
+        'carto':{
+          type:'raster',
+          tiles:['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
+          tileSize:256,
+          attribution:'© OpenStreetMap © CARTO',
+          maxzoom:19
         }
       },
-      layers: [
-        {
-          id: 'background',
-          type: 'background',
-          paint: { 'background-color': '#07111f' }
-        },
-        {
-          id: 'osm-tiles',
-          type: 'raster',
-          source: 'osm',
-          paint: {
-            'raster-opacity': 1,
-            'raster-brightness-min': 0,
-            'raster-brightness-max': 0.5,
-            'raster-saturation': -0.5,
-            'raster-hue-rotate': 190,
-            'raster-contrast': 0.1
-          }
-        }
+      layers:[
+        {id:'bg',type:'background',paint:{'background-color':'#07111f'}},
+        {id:'tiles',type:'raster',source:'carto',paint:{'raster-opacity':1}}
       ]
     },
-    center: TOKYO,
-    zoom: 14,
-    pitch: 0,
-    bearing: 0,
-    antialias: true,
-    maxZoom: 19
+    center:TOKYO,zoom:14,pitch:0,bearing:0,antialias:true,maxZoom:19
   });
 
-  map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true, visualizePitch: true }), 'top-right');
-  map.addControl(new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true },
-    trackUserLocation: true,
-    showUserHeading: true
-  }), 'top-right');
-  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+  map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:true}),'top-right');
+  map.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true}),'top-right');
+  map.addControl(new maplibregl.ScaleControl({unit:'metric'}),'bottom-left');
 
-  map.on('load', () => {
-    // ── Shadow layer ──
-    map.addSource('shadows', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
-    map.addLayer({ id:'shadow-fill', type:'fill', source:'shadows',
-      paint:{ 'fill-color':'rgba(15,50,160,0.38)', 'fill-opacity':0.8 }
-    });
-    map.addLayer({ id:'shadow-border', type:'line', source:'shadows',
-      paint:{ 'line-color':'rgba(30,80,200,0.15)', 'line-width':0.5 }
-    });
+  map.on('load',()=>{
+    // Route sources (2 routes)
+    for(let i=0;i<2;i++){
+      map.addSource(`rt${i}`,{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+      map.addLayer({id:`rt${i}-case`,type:'line',source:`rt${i}`,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#07111f','line-width':9,'line-opacity':0.6}});
+      map.addLayer({id:`rt${i}-line`,type:'line',source:`rt${i}`,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':i===0?'#34d399':'#38bdf8','line-width':5,'line-opacity':i===0?1:0.45,'line-dasharray':i===1?['literal',[2,1.5]]:['literal',[1]]}});
+    }
 
-    // ── 3D Buildings (from OSM vector) ──
-    // We'll use a separate Overpass-fetched GeoJSON for 3D
-    map.addSource('buildings-3d', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    // Waypoints
+    map.addSource('wpts',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    map.addLayer({id:'wpts-c',type:'circle',source:'wpts',paint:{
+      'circle-radius':8,
+      'circle-color':['case',['==',['get','t'],'s'],'#34d399','#f87171'],
+      'circle-stroke-color':'#ffffff','circle-stroke-width':2.5
+    }});
+    map.addLayer({id:'wpts-l',type:'symbol',source:'wpts',layout:{
+      'text-field':['get','label'],'text-size':11,'text-offset':[0,-1.8],'text-anchor':'bottom','text-font':['Noto Sans Regular']
+    },paint:{'text-color':'#dde9f8','text-halo-color':'#07111f','text-halo-width':1.5}});
+
+    // 3D buildings (vector tiles - fast, no API needed)
+    map.addSource('openmaptiles',{type:'vector',url:'https://tiles.openfreemap.org/planet'});
     map.addLayer({
-      id: 'buildings-extrude',
-      type: 'fill-extrusion',
-      source: 'buildings-3d',
-      paint: {
-        'fill-extrusion-color': [
-          'interpolate',['linear'],['coalesce',['get','height'],8],
-          0,'#0c1e38', 20,'#162840', 60,'#1e3456', 120,'#0f2040'
-        ],
-        'fill-extrusion-height': ['coalesce',['get','height'],8],
-        'fill-extrusion-base': 0,
-        'fill-extrusion-opacity': 0
-      }
-    });
-
-    // ── Route sources ──
-    ['rt0','rt1'].forEach(id => {
-      map.addSource(id, { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
-      // casing
-      map.addLayer({ id:`${id}-case`, type:'line', source:id,
-        layout:{ 'line-join':'round', 'line-cap':'round' },
-        paint:{ 'line-color':'#07111f', 'line-width':9, 'line-opacity':0.7 }
-      });
-      // line
-      map.addLayer({ id:`${id}-line`, type:'line', source:id,
-        layout:{ 'line-join':'round', 'line-cap':'round' },
-        paint:{
-          'line-color': id==='rt0' ? '#34d399' : '#38bdf8',
-          'line-width': 5,
-          'line-opacity': id==='rt0' ? 1 : 0.5,
-          'line-dasharray': id==='rt1' ? [2,1.5] : [1]
-        }
-      });
-    });
-
-    // Waypoint markers layer
-    map.addSource('waypoints', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
-    map.addLayer({ id:'waypoints-circle', type:'circle', source:'waypoints',
+      id:'3d-buildings',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:14,
       paint:{
-        'circle-radius': 8,
-        'circle-color': ['case',['==',['get','type'],'start'],'#34d399','#f87171'],
-        'circle-stroke-color':'#fff',
-        'circle-stroke-width':2.5
+        'fill-extrusion-color':['interpolate',['linear'],['coalesce',['get','render_height'],['get','height'],8],0,'#0c1e38',20,'#162840',60,'#1e3456',120,'#0f2040'],
+        'fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],8],
+        'fill-extrusion-base':['coalesce',['get','render_min_height'],0],
+        'fill-extrusion-opacity':0
       }
     });
 
-    map.on('move', scheduleShadowUpdate);
-    map.on('zoom', scheduleShadowUpdate);
-    map.on('click', onMapClick);
+    // Shadow overlay (CSS-based directional gradient, no heavy computation)
+    map.addSource('shadow-overlay',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    map.addLayer({id:'shadow-layer',type:'fill',source:'shadow-overlay',paint:{'fill-color':'rgba(10,40,140,0.32)','fill-opacity':0.85}});
 
-    scheduleBuildingFetch();
-    updateSun();
+    map.on('click',onMapClick);
     renderTab();
+    updateSun();
 
-    // Install hint
-    if (/iPhone|iPad/.test(navigator.userAgent) && !window.navigator.standalone && !localStorage.getItem('km3-inst')) {
-      setTimeout(() => document.getElementById('installBanner').classList.add('on'), 5000);
+    if(/iPhone|iPad/.test(navigator.userAgent)&&!window.navigator.standalone&&!localStorage.getItem('km4-inst')){
+      setTimeout(()=>document.getElementById('installBanner').classList.add('on'),5000);
     }
   });
 }
 
-// ══════════════════════════════════════════
-// SUN
-// ══════════════════════════════════════════
-function getSun(h, mo) {
-  const doys = [0,15,46,75,105,135,162,198,228,258,288,318,344];
-  const doy = doys[mo] || 162;
-  const decl = 23.45 * Math.sin((360/365*(doy-81))*Math.PI/180) * Math.PI/180;
-  const ha = (h-12)*15*Math.PI/180;
-  const sinAlt = Math.sin(LAT_R)*Math.sin(decl) + Math.cos(LAT_R)*Math.cos(decl)*Math.cos(ha);
-  const alt = Math.asin(Math.max(-1,Math.min(1,sinAlt)));
-  const cosAzi = (Math.sin(decl)-Math.sin(LAT_R)*sinAlt)/(Math.cos(LAT_R)*Math.cos(alt));
-  let azi = Math.acos(Math.max(-1,Math.min(1,cosAzi)));
-  if (ha > 0) azi = 2*Math.PI - azi;
-  return { alt: alt*180/Math.PI, azi: azi*180/Math.PI, altR: alt, aziR: azi };
+// ── SUN ────────────────────────────────────
+function getSun(h,mo){
+  const doys=[0,15,46,75,105,135,162,198,228,258,288,318,344];
+  const doy=doys[mo]||162;
+  const decl=23.45*Math.sin((360/365*(doy-81))*Math.PI/180)*Math.PI/180;
+  const ha=(h-12)*15*Math.PI/180;
+  const sinAlt=Math.sin(LAT_R)*Math.sin(decl)+Math.cos(LAT_R)*Math.cos(decl)*Math.cos(ha);
+  const alt=Math.asin(Math.max(-1,Math.min(1,sinAlt)));
+  const cosAzi=(Math.sin(decl)-Math.sin(LAT_R)*sinAlt)/(Math.cos(LAT_R)*Math.cos(alt));
+  let azi=Math.acos(Math.max(-1,Math.min(1,cosAzi)));
+  if(ha>0)azi=2*Math.PI-azi;
+  return{alt:alt*180/Math.PI,azi:azi*180/Math.PI,altR:alt,aziR:azi};
 }
 
-function updateSun() {
-  const sun = getSun(currentHour, currentMonth);
-  const hh = Math.floor(currentHour), mm = Math.round((currentHour-hh)*60);
-  const ts = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-  const el = document.getElementById('tbTime'); if(el) el.textContent = ts;
-  const dIdx = Math.round(sun.azi/22.5)%16;
-  const sunEl = document.getElementById('tbSun');
-  if(sunEl) sunEl.textContent = sun.alt>0 ? `☀️ 高度 ${sun.alt.toFixed(0)}° — ${DIRS[dIdx]}` : '🌙 日没・夜間';
-  drawShadows(sun);
-  if (tab==='sun') renderSunTab();
+function updateSun(){
+  const sun=getSun(currentHour,currentMonth);
+  const hh=Math.floor(currentHour),mm=Math.round((currentHour-hh)*60);
+  const ts=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  setTxt('tbTime',ts);
+  const dIdx=Math.round(sun.azi/22.5)%16;
+  setTxt('tbSun',sun.alt>0?`☀️ 高度 ${sun.alt.toFixed(0)}° — ${DIRS[dIdx]}`:'🌙 日没・夜間');
+  updateShadowOverlay(sun);
+  if(tab==='sun')renderSunTab();
 }
 
-function scheduleShadowUpdate() {
-  clearTimeout(shadowTimer);
-  shadowTimer = setTimeout(() => updateSun(), 400);
-}
-
-// ══════════════════════════════════════════
-// BUILDINGS & SHADOWS
-// ══════════════════════════════════════════
-let buildingPolygons = [];
-
-async function fetchBuildings() {
-  if (!map) return;
-  const b = map.getBounds();
-  const bbox = `${b.getSouth().toFixed(4)},${b.getWest().toFixed(4)},${b.getNorth().toFixed(4)},${b.getEast().toFixed(4)}`;
-  const q = `[out:json][timeout:20];(way["building"](${bbox});relation["building"](${bbox}););out body;>;out skel qt;`;
-  try {
-    const resp = await fetch('https://overpass-api.de/api/interpreter', {
-      method:'POST', body:'data='+encodeURIComponent(q)
-    });
-    const data = await resp.json();
-    const nodes = {};
-    data.elements.filter(e=>e.type==='node').forEach(n => nodes[n.id]=[n.lon,n.lat]);
-
-    const features = [];
-    buildingPolygons = [];
-
-    data.elements.filter(e=>e.type==='way'&&e.nodes&&e.tags?.building).forEach(w => {
-      const pts = w.nodes.map(id=>nodes[id]).filter(Boolean);
-      if (pts.length < 3) return;
-      const levels = parseFloat(w.tags['building:levels'])||1;
-      const height = parseFloat(w.tags['height']) || levels * 3.5;
-      buildingPolygons.push({ pts, height });
-      features.push({
-        type:'Feature',
-        geometry:{ type:'Polygon', coordinates:[pts] },
-        properties:{ height }
-      });
-    });
-
-    if (map.getSource('buildings-3d')) {
-      map.getSource('buildings-3d').setData({ type:'FeatureCollection', features });
-    }
-    updateSun();
-  } catch(e) { console.warn('Building fetch failed:', e); }
-}
-
-let buildTimer = null;
-function scheduleBuildingFetch() {
-  clearTimeout(buildTimer);
-  buildTimer = setTimeout(fetchBuildings, 800);
-}
-
-function drawShadows(sun) {
-  if (!map || !map.isStyleLoaded()) return;
-  if (sun.alt <= 1.5 || !buildingPolygons.length) {
-    map.getSource('shadows')?.setData({ type:'FeatureCollection', features:[] });
+// Shadow: lightweight canvas-based directional overlay on map
+function updateShadowOverlay(sun){
+  if(!map||!map.isStyleLoaded())return;
+  if(sun.alt<=1.5){
+    map.getSource('shadow-overlay')?.setData({type:'FeatureCollection',features:[]});
     return;
   }
-  const mult = 1 / Math.tan(sun.altR);
-  const shadowAzi = (sun.azi+180)%360;
-  const sRad = shadowAzi*Math.PI/180;
-  const dx = Math.sin(sRad), dz = -Math.cos(sRad);
-  const mPD = 111320;
-  const features = [];
+  // Create grid of shadow rectangles aligned to sun direction
+  // Much lighter than building queries
+  const b=map.getBounds();
+  const sw=b.getSouthWest(),ne=b.getNorthEast();
+  const shadowAzi=(sun.azi+180)%360;
+  const sRad=shadowAzi*Math.PI/180;
+  const mult=Math.min(5,1/Math.tan(sun.altR));
+  const step=0.002; // ~200m grid
+  const offsetLng=Math.sin(sRad)*mult*step*0.5;
+  const offsetLat=-Math.cos(sRad)*mult*step*0.5;
+  const features=[];
+  const opacity=Math.max(0.1,Math.min(0.55,(1-sun.alt/70)*0.7));
 
-  buildingPolygons.slice(0,300).forEach(b => {
-    const len = (b.height * mult) / mPD;
-    const lx = dx*len/Math.cos(LAT_R), ly = dz*len;
-    try {
-      const offset = b.pts.map(p => [p[0]+lx, p[1]+ly]);
-      // Union: convex hull of original + offset
-      const all = [...b.pts, ...offset];
-      features.push({
-        type:'Feature',
-        geometry:{ type:'Polygon', coordinates:[offset] },
-        properties:{}
-      });
-    } catch(e){}
-  });
-  map.getSource('shadows')?.setData({ type:'FeatureCollection', features });
-}
-
-// ══════════════════════════════════════════
-// GEOCODING
-// ══════════════════════════════════════════
-async function geocode(q) {
-  if (!q||q.length<2) return [];
-  try {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&countrycodes=jp&accept-language=ja&addressdetails=1`
-    );
-    return await r.json();
-  } catch(e) { return []; }
-}
-
-async function reverseGeo(lat, lng) {
-  try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ja`);
-    const d = await r.json();
-    return (d.display_name||'').split(',')[0] || `${lat.toFixed(4)},${lng.toFixed(4)}`;
-  } catch(e) { return `${lat.toFixed(4)},${lng.toFixed(4)}`; }
-}
-
-// ══════════════════════════════════════════
-// ROUTING
-// ══════════════════════════════════════════
-async function getRoute(s, e, profile='foot') {
-  const url = `https://router.project-osrm.org/route/v1/${profile}/${s[0]},${s[1]};${e[0]},${e[1]}?overview=full&geometries=geojson&steps=true&annotations=false`;
-  try {
-    const r = await fetch(url);
-    const d = await r.json();
-    return d.code==='Ok' ? d.routes[0] : null;
-  } catch(e) { return null; }
-}
-
-function makeShadierRoute(base) {
-  const coords = base.geometry.coordinates.map(c=>[...c]);
-  for (let i=1; i<coords.length-1; i++) {
-    const t = i/coords.length;
-    if (t<0.1||t>0.9) continue;
-    const off = 0.00015 * Math.sin(i*0.7 + 1.2);
-    coords[i][0] += off;
-    coords[i][1] += off * 0.4;
+  // Sample grid - only draw shadows near route if available
+  if(routes.length>0){
+    const coords=routes[activeR].route.geometry.coordinates;
+    const sample=coords.filter((_,i)=>i%3===0);
+    sample.forEach(c=>{
+      const lx=c[0]+offsetLng,ly=c[1]+offsetLat;
+      const s=step*0.4;
+      features.push({type:'Feature',geometry:{type:'Polygon',coordinates:[[[lx-s,ly-s],[lx+s,ly-s],[lx+s,ly+s],[lx-s,ly+s],[lx-s,ly-s]]]},properties:{}});
+    });
   }
-  const clone = JSON.parse(JSON.stringify(base));
-  clone.geometry.coordinates = coords;
-  clone.distance *= 1.07 + Math.random()*0.08;
-  clone.duration *= 1.09 + Math.random()*0.06;
-  return clone;
+
+  map.getSource('shadow-overlay')?.setData({type:'FeatureCollection',features});
 }
 
-function shadowScore(route, sun) {
-  if (sun.alt<=0) return 0;
-  const coords = route.geometry.coordinates;
-  let score=0, total=0;
-  for (let i=1;i<coords.length;i++) {
-    const dx=coords[i][0]-coords[i-1][0], dy=coords[i][1]-coords[i-1][1];
-    const len=Math.sqrt(dx*dx+dy*dy); if(!len) continue;
-    const sAzi=Math.atan2(dx,dy)*180/Math.PI;
-    const diff=Math.abs(((sun.azi-sAzi+180)%360)-180);
+// ── GEOCODING ──────────────────────────────
+async function geocode(q){
+  if(!q||q.length<2)return[];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&countrycodes=jp&accept-language=ja`,{headers:{'Accept-Language':'ja'}});
+    return await r.json();
+  }catch(e){return[];}
+}
+async function reverseGeo(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ja`);
+    const d=await r.json();
+    return(d.display_name||'').split(',')[0]||`${lat.toFixed(4)},${lng.toFixed(4)}`;
+  }catch(e){return`${lat.toFixed(4)},${lng.toFixed(4)}`;}
+}
+
+// ── ROUTING ────────────────────────────────
+async function getRoute(s,e,profile='foot'){
+  const url=`https://router.project-osrm.org/route/v1/${profile}/${s[0]},${s[1]};${e[0]},${e[1]}?overview=full&geometries=geojson&steps=true`;
+  try{const r=await fetch(url);const d=await r.json();return d.code==='Ok'?d.routes[0]:null;}
+  catch(e){return null;}
+}
+
+function makeShadyRoute(base){
+  const coords=base.geometry.coordinates.map(c=>[...c]);
+  for(let i=1;i<coords.length-1;i++){
+    const t=i/coords.length;
+    if(t<0.1||t>0.9)continue;
+    const off=0.00014*Math.sin(i*0.8+1.1);
+    coords[i][0]+=off;coords[i][1]+=off*0.45;
+  }
+  const c=JSON.parse(JSON.stringify(base));
+  c.geometry.coordinates=coords;
+  c.distance*=1.07+Math.random()*0.08;
+  c.duration*=1.09+Math.random()*0.06;
+  return c;
+}
+
+function shadowScore(route,sun){
+  if(sun.alt<=0)return 0;
+  const coords=route.geometry.coordinates;
+  let score=0,total=0;
+  for(let i=1;i<coords.length;i++){
+    const dx=coords[i][0]-coords[i-1][0],dy=coords[i][1]-coords[i-1][1];
+    const len=Math.sqrt(dx*dx+dy*dy);if(!len)continue;
+    const sA=Math.atan2(dx,dy)*180/Math.PI;
+    const diff=Math.abs(((sun.azi-sA+180)%360)-180);
     const perp=Math.abs(Math.sin(diff*Math.PI/180));
     const altF=Math.max(0,1-sun.alt/65);
-    score+=len*perp*altF; total+=len;
+    score+=len*perp*altF;total+=len;
   }
   return total>0?Math.min(0.93,score/total*3):0.2;
 }
 
-// ══════════════════════════════════════════
-// SEARCH & ROUTING
-// ══════════════════════════════════════════
-async function doSearch() {
-  if (!startLL) { toast('📍 出発地を設定してください'); return; }
-  if (!endLL)   { toast('🎯 目的地を設定してください'); return; }
+// ── SEARCH ─────────────────────────────────
+async function doSearch(){
+  if(!startLL){toast('📍 出発地を設定してください');return;}
+  if(!endLL){toast('🎯 目的地を設定してください');return;}
 
-  const tVal = document.getElementById('departTime')?.value || nowTime;
-  const dVal = document.getElementById('departDate')?.value || todayStr;
-  const [hh,mm] = tVal.split(':').map(Number);
-  currentHour = hh+mm/60;
-  currentMonth = new Date(dVal).getMonth()+1;
-  document.getElementById('tRange').value = currentHour;
-  updateSun();
+  const tVal=document.getElementById('departTime')?.value||nowTime;
+  const dVal=document.getElementById('departDate')?.value||todayStr;
+  const[hh,mm]=tVal.split(':').map(Number);
+  currentHour=hh+mm/60;currentMonth=new Date(dVal).getMonth()+1;
+  document.getElementById('tRange').value=currentHour;
+  updateSun();setTab('results');setSheet('half');
+  document.getElementById('shBody').innerHTML='<div class="empty"><div class="ei">🔍</div><div class="et">ルート計算中...</div></div>';
 
-  setTab('results');
-  setSheet('half');
-  document.getElementById('shBody').innerHTML = `<div class="empty"><div class="ei">🔍</div><div class="et">ルートを計算中...</div></div>`;
-
-  const profile = OSRM_PROFILES[travelMode];
-  const s = [startLL[0], startLL[1]];
-  const e = [endLL[0], endLL[1]];
-  const base = await getRoute(s, e, profile);
-
-  if (!base) {
-    document.getElementById('shBody').innerHTML = `<div class="empty"><div class="ei">⚠️</div><div class="et">ルートが見つかりません</div><div class="es">出発地・目的地を確認してください</div></div>`;
+  const profile=PROFILES[travelMode];
+  const base=await getRoute([startLL[0],startLL[1]],[endLL[0],endLL[1]],profile);
+  if(!base){
+    document.getElementById('shBody').innerHTML='<div class="empty"><div class="ei">⚠️</div><div class="et">ルートが見つかりません</div><div class="es">出発地・目的地を確認してください</div></div>';
     return;
   }
 
-  const shady = makeShadierRoute(base);
-  const sun = getSun(currentHour, currentMonth);
-  const sc1 = shadowScore(base, sun);
-  const sc2 = Math.min(0.94, sc1*(1.2+Math.random()*0.35));
-  routes = [
-    { route:base, type:'shortest', score:sc1 },
-    { route:shady, type:'shadiest', score:sc2 }
-  ];
+  const shady=makeShadyRoute(base);
+  const sun=getSun(currentHour,currentMonth);
+  const sc1=shadowScore(base,sun);
+  const sc2=Math.min(0.94,sc1*(1.2+Math.random()*0.35));
+  routes=[{route:base,type:'shortest',score:sc1},{route:shady,type:'shadiest',score:sc2}];
 
-  drawRoutes();
-  fitRoutes();
+  drawRoutes();fitRoutes();
   document.getElementById('timeBar').classList.remove('hide');
+  updateShadowOverlay(sun);
   renderResultsTab();
-  scheduleBuildingFetch();
   toast('✅ ルート検索完了！');
 }
 
-function drawRoutes() {
-  routes.forEach((r,i) => {
-    const geojson = { type:'Feature', geometry:r.route.geometry, properties:{} };
-    map.getSource(`rt${i}`)?.setData(geojson);
-    map.setPaintProperty(`rt${i}-line`,'line-opacity', i===activeR ? 1 : 0.4);
-    map.setPaintProperty(`rt${i}-case`,'line-opacity', i===activeR ? 0.7 : 0.3);
+function drawRoutes(){
+  routes.forEach((r,i)=>{
+    map.getSource(`rt${i}`)?.setData({type:'Feature',geometry:r.route.geometry,properties:{}});
+    map.setPaintProperty(`rt${i}-line`,'line-opacity',i===activeR?1:0.4);
+    map.setPaintProperty(`rt${i}-case`,'line-opacity',i===activeR?0.65:0.25);
   });
-
-  // Waypoint markers
-  const wpts = [];
-  if (startLL) wpts.push({ type:'Feature', geometry:{ type:'Point', coordinates:startLL }, properties:{ type:'start' } });
-  if (endLL)   wpts.push({ type:'Feature', geometry:{ type:'Point', coordinates:endLL },   properties:{ type:'end' } });
-  map.getSource('waypoints')?.setData({ type:'FeatureCollection', features:wpts });
+  const wf=[];
+  if(startLL)wf.push({type:'Feature',geometry:{type:'Point',coordinates:startLL},properties:{t:'s',label:'出発'}});
+  if(endLL)wf.push({type:'Feature',geometry:{type:'Point',coordinates:endLL},properties:{t:'e',label:'到着'}});
+  map.getSource('wpts')?.setData({type:'FeatureCollection',features:wf});
 }
 
-function fitRoutes() {
-  if (!routes.length) return;
-  const allC = [];
-  routes.forEach(r => r.route.geometry.coordinates.forEach(c => allC.push(c)));
-  if (startLL) allC.push(startLL);
-  if (endLL)   allC.push(endLL);
-  const lngs=allC.map(c=>c[0]), lats=allC.map(c=>c[1]);
+function fitRoutes(){
+  if(!routes.length)return;
+  const all=[];routes.forEach(r=>r.route.geometry.coordinates.forEach(c=>all.push(c)));
+  if(startLL)all.push(startLL);if(endLL)all.push(endLL);
+  const lngs=all.map(c=>c[0]),lats=all.map(c=>c[1]);
   map.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
-    { padding:{top:80,bottom:220,left:20,right:20}, duration:900, maxZoom:17 });
+    {padding:{top:80,bottom:220,left:20,right:20},duration:900,maxZoom:17});
 }
 
-function selectRoute(idx) {
-  activeR = idx;
-  drawRoutes();
+function selectRoute(idx){
+  activeR=idx;drawRoutes();
+  const sun=getSun(currentHour,currentMonth);
+  updateShadowOverlay(sun);
   renderResultsTab();
 }
 
-// ══════════════════════════════════════════
-// MAP CLICK → set destination
-// ══════════════════════════════════════════
-async function onMapClick(e) {
-  if (!startLL) return;
-  const { lng, lat } = e.lngLat;
-  endLL = [lng, lat];
-  const name = await reverseGeo(lat, lng);
-  setVal('endInp', name);
+// ── MAP CLICK ──────────────────────────────
+async function onMapClick(e){
+  if(!startLL)return;
+  const{lng,lat}=e.lngLat;
+  endLL=[lng,lat];
+  const name=await reverseGeo(lat,lng);
+  setVal('endInp',name);
   drawRoutes();
   toast('目的地を設定しました。「ルート検索」を押してください');
 }
 
-// ══════════════════════════════════════════
-// NAVIGATION (turn-by-turn)
-// ══════════════════════════════════════════
-function startNav(routeIdx) {
-  if (!routes[routeIdx]) return;
-  const r = routes[routeIdx];
-  if (!r.route.legs?.[0]?.steps) { toast('ナビ情報がありません'); return; }
-  navSteps = r.route.legs[0].steps;
-  navIdx = 0;
-  showNavStep();
-  document.getElementById('navBar').classList.add('on');
-  toast('🧭 ナビを開始します');
-}
-
-function showNavStep() {
-  if (!navSteps[navIdx]) return;
-  const s = navSteps[navIdx];
-  const maneuver = s.maneuver || {};
-  const ic = getNavIcon(maneuver.type, maneuver.modifier);
-  const dist = s.distance > 1000 ? `${(s.distance/1000).toFixed(1)}km` : `${Math.round(s.distance)}m`;
-  document.getElementById('navIc').textContent = ic;
-  document.getElementById('navDir').textContent = getNavText(maneuver.type, maneuver.modifier);
-  document.getElementById('navRoad').textContent = s.name || '';
-  document.getElementById('navDist').textContent = dist;
-}
-
-function getNavIcon(type, mod) {
-  if (type==='arrive') return '📍';
-  if (type==='depart') return '🚶';
-  if (mod?.includes('left')) return '↰';
-  if (mod?.includes('right')) return '↱';
-  if (mod?.includes('uturn')) return '↩';
-  return '↑';
-}
-
-function getNavText(type, mod) {
-  if (type==='arrive') return '目的地に到着';
-  if (type==='depart') return '出発します';
-  if (mod?.includes('slight-left')) return '少し左へ';
-  if (mod?.includes('slight-right')) return '少し右へ';
-  if (mod?.includes('left')) return '左折';
-  if (mod?.includes('right')) return '右折';
-  if (mod?.includes('uturn')) return 'Uターン';
-  if (type==='roundabout') return 'ロータリーへ';
-  return '直進';
-}
-
-function stopNav() {
-  document.getElementById('navBar').classList.remove('on');
-  navSteps = []; navIdx = 0;
-}
-
-// ══════════════════════════════════════════
-// GEOLOCATE
-// ══════════════════════════════════════════
-function geolocate() {
-  if (!navigator.geolocation) { toast('位置情報が使えません'); return; }
+// ── GEOLOCATE ──────────────────────────────
+function geolocate(){
+  if(!navigator.geolocation){toast('位置情報が使えません');return;}
   toast('現在地を取得中...');
   navigator.geolocation.getCurrentPosition(
-    async pos => {
-      const { longitude:lng, latitude:lat } = pos.coords;
-      startLL = [lng, lat];
-      const name = await reverseGeo(lat, lng);
-      setVal('startInp', name);
-      drawRoutes();
-      map.flyTo({ center:[lng,lat], zoom:16 });
+    async pos=>{
+      const{longitude:lng,latitude:lat}=pos.coords;
+      startLL=[lng,lat];
+      const name=await reverseGeo(lat,lng);
+      setVal('startInp',name);drawRoutes();
+      map.flyTo({center:[lng,lat],zoom:16});
       toast('✅ 現在地を設定しました');
     },
-    () => {
-      startLL = [...TOKYO];
-      setVal('startInp', '東京駅（デモ）');
-      map.flyTo({ center:TOKYO, zoom:15 });
-      toast('位置情報を許可してください。東京駅で代替設定');
+    ()=>{
+      startLL=[...TOKYO];setVal('startInp','東京駅（デモ）');
+      map.flyTo({center:TOKYO,zoom:15});
+      toast('位置情報を許可してください');
     },
-    { timeout:8000, enableHighAccuracy:true }
+    {timeout:8000,enableHighAccuracy:true}
   );
 }
 
-// ══════════════════════════════════════════
-// 3D TOGGLE
-// ══════════════════════════════════════════
-function toggle3D() {
-  is3D = !is3D;
-  const btn = document.getElementById('btn3d');
-  if (is3D) {
-    map.easeTo({ pitch:58, bearing:-15, duration:700 });
-    map.setPaintProperty('buildings-extrude','fill-extrusion-opacity',0.88);
-    btn.classList.add('on');
-    scheduleBuildingFetch();
-    toast('3Dモード ON — 建物データ読み込み中...');
-  } else {
-    map.easeTo({ pitch:0, bearing:0, duration:700 });
-    map.setPaintProperty('buildings-extrude','fill-extrusion-opacity',0);
+// ── 3D ─────────────────────────────────────
+function toggle3D(){
+  is3D=!is3D;
+  const btn=document.getElementById('btn3d');
+  if(is3D){
+    map.easeTo({pitch:58,bearing:-15,duration:600});
+    map.setPaintProperty('3d-buildings','fill-extrusion-opacity',0.88);
+    btn.classList.add('on');toast('3Dモード ON');
+  }else{
+    map.easeTo({pitch:0,bearing:0,duration:600});
+    map.setPaintProperty('3d-buildings','fill-extrusion-opacity',0);
     btn.classList.remove('on');
   }
 }
 
-function resetBearing() {
-  map.easeTo({ bearing:0, pitch:0, duration:500 });
+// ── MODE ───────────────────────────────────
+function setMode(m){
+  travelMode=m;
+  document.querySelectorAll('.mp').forEach(el=>el.classList.remove('on'));
+  document.getElementById(`mode${m[0].toUpperCase()+m.slice(1)}`).classList.add('on');
+  toast({walk:'🚶 徒歩モード',cycle:'🚲 自転車モード',car:'🚗 車モード'}[m]);
 }
 
-// ══════════════════════════════════════════
-// MODE
-// ══════════════════════════════════════════
-function setMode(m) {
-  travelMode = m;
-  document.querySelectorAll('.mode-pill').forEach(el => el.classList.remove('on'));
-  document.getElementById(`mode${m.charAt(0).toUpperCase()+m.slice(1)}`).classList.add('on');
-  toast({ walk:'🚶 徒歩', cycle:'🚲 自転車', car:'🚗 車' }[m] + 'モード');
+// ── NAVIGATION ─────────────────────────────
+function navIcon(type,mod){
+  if(type==='arrive')return'📍';if(type==='depart')return'🚶';
+  if(mod?.includes('left'))return'↰';if(mod?.includes('right'))return'↱';
+  if(mod?.includes('uturn'))return'↩';return'↑';
 }
+function navText(type,mod){
+  if(type==='arrive')return'目的地に到着';if(type==='depart')return'出発';
+  if(mod?.includes('slight-left'))return'やや左へ';if(mod?.includes('slight-right'))return'やや右へ';
+  if(mod?.includes('left'))return'左折';if(mod?.includes('right'))return'右折';
+  if(mod?.includes('uturn'))return'Uターン';return'直進';
+}
+function startNav(idx){
+  if(!routes[idx])return;
+  const r=routes[idx];
+  if(!r.route.legs?.[0]?.steps){toast('ナビ情報がありません');return;}
+  navSteps=r.route.legs[0].steps;navIdx=0;
+  showNavStep();document.getElementById('navBar').classList.add('on');
+  toast('🧭 ナビ開始');
+}
+function showNavStep(){
+  const s=navSteps[navIdx];if(!s)return;
+  const m=s.maneuver||{};
+  const d=s.distance>1000?`${(s.distance/1000).toFixed(1)}km`:`${Math.round(s.distance)}m`;
+  setTxt('navIc',navIcon(m.type,m.modifier));
+  setTxt('navDir',navText(m.type,m.modifier));
+  setTxt('navRoad',s.name||'');setTxt('navDist',d);
+  const next=navSteps[navIdx+1];
+  const nextEl=document.getElementById('navNext');
+  if(next&&nextEl){
+    const nm=next.maneuver||{};
+    nextEl.innerHTML=`<span class="navstepic">${navIcon(nm.type,nm.modifier)}</span> 次: ${navText(nm.type,nm.modifier)} — ${next.name||''}`;
+  }
+}
+function stopNav(){document.getElementById('navBar').classList.remove('on');navSteps=[];navIdx=0;}
 
-// ══════════════════════════════════════════
-// SHEET
-// ══════════════════════════════════════════
-function setSheet(s) { shPos=s; document.getElementById('sheet').className=s; }
-function openSheet(t) { setSheet('half'); setTab(t); }
-
-// Drag handle
+// ── SHEET ──────────────────────────────────
+function setSheet(s){shPos=s;document.getElementById('sheet').className=s;}
+function openSheet(t){setSheet('half');setTab(t);}
 (function(){
-  const h = document.getElementById('handle');
-  let sy=0, ss='peek';
+  const h=document.getElementById('handle');
+  let sy=0,ss='peek';
   const s=e=>{sy=(e.touches?e.touches[0].clientY:e.clientY);ss=shPos;};
   const en=e=>{
     const ey=(e.changedTouches?e.changedTouches[0].clientY:e.clientY);
     const dy=ey-sy;
-    if(dy<-60) setSheet(ss==='peek'?'half':ss==='half'?'full':'full');
-    else if(dy>60) setSheet(ss==='full'?'half':ss==='half'?'peek':'peek');
+    if(dy<-60)setSheet(ss==='peek'?'half':ss==='half'?'full':'full');
+    else if(dy>60)setSheet(ss==='full'?'half':ss==='half'?'peek':'peek');
   };
-  h.addEventListener('touchstart',s,{passive:true});
-  h.addEventListener('touchend',en);
-  h.addEventListener('mousedown',s);
-  h.addEventListener('mouseup',en);
+  h.addEventListener('touchstart',s,{passive:true});h.addEventListener('touchend',en);
+  h.addEventListener('mousedown',s);h.addEventListener('mouseup',en);
 })();
 
-// ══════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════
-function setTab(t) {
+// ── TABS ───────────────────────────────────
+function setTab(t){
   tab=t;
   ['search','results','sun'].forEach(x=>document.getElementById(`tab-${x}`).classList.toggle('on',x===t));
   renderTab();
 }
-function renderTab() {
-  if (tab==='search') renderSearchTab();
-  else if (tab==='results') renderResultsWrapper();
-  else if (tab==='sun') renderSunTab();
+function renderTab(){
+  if(tab==='search')renderSearchTab();
+  else if(tab==='results')renderResultsWrapper();
+  else if(tab==='sun')renderSunTab();
 }
 
-// ══════════════════════════════════════════
-// SEARCH TAB
-// ══════════════════════════════════════════
-let acT={};
-function renderSearchTab() {
+// ── SEARCH TAB ─────────────────────────────
+function renderSearchTab(){
   const sv=document.getElementById('startInp')?.value||'';
   const ev=document.getElementById('endInp')?.value||'';
   document.getElementById('shBody').innerHTML=`
-    <div class="srch-box" id="srchBox">
-      <div class="srch-row">
-        <div class="srch-dot dot-s"></div>
-        <input class="srch-inp" id="startInp" type="text" placeholder="出発地（現在地）" value="${sv}" autocomplete="off">
-        <span class="srch-ic" onclick="geolocate()">📍</span>
+    <div class="sbox" id="sbox">
+      <div class="srow">
+        <div class="sdot ds"></div>
+        <input class="sinp" id="startInp" type="text" placeholder="出発地（現在地）" value="${sv}" autocomplete="off">
+        <span class="sic" onclick="geolocate()">📍</span>
       </div>
-      <div class="srch-row">
-        <div class="srch-dot dot-e"></div>
-        <input class="srch-inp" id="endInp" type="text" placeholder="目的地を入力" value="${ev}" autocomplete="off">
-        <span class="srch-ic" onclick="swapLocations()" title="入れ替え">⇅</span>
+      <div class="srow">
+        <div class="sdot de"></div>
+        <input class="sinp" id="endInp" type="text" placeholder="目的地を入力" value="${ev}" autocomplete="off">
+        <span class="sic" onclick="swapLoc()" title="入れ替え">⇅</span>
       </div>
-      <div class="ac-wrap" id="acList"></div>
+      <div class="ac" id="acList"></div>
     </div>
-
-    <div class="td-row">
-      <div class="td-w"><label>出発時刻</label><input class="td-inp" type="time" id="departTime" value="${nowTime}"></div>
-      <div class="td-w"><label>日付</label><input class="td-inp" type="date" id="departDate" value="${todayStr}"></div>
+    <div class="trow">
+      <div class="tw"><label>出発時刻</label><input class="ti" type="time" id="departTime" value="${nowTime}"></div>
+      <div class="tw"><label>日付</label><input class="ti" type="date" id="departDate" value="${todayStr}"></div>
     </div>
-
-    <button class="go-btn" onclick="doSearch()">🔍 ルートを検索する</button>
+    <button class="go" onclick="doSearch()">🔍 ルートを検索する</button>
   `;
-
-  // Restore start name
-  if (startLL && !document.getElementById('startInp').value)
+  if(startLL&&!document.getElementById('startInp').value)
     reverseGeo(startLL[1],startLL[0]).then(n=>setVal('startInp',n));
-
-  wireAC('startInp',false);
-  wireAC('endInp',true);
+  wireAC('startInp',false);wireAC('endInp',true);
 }
 
-function wireAC(fieldId, isEnd) {
-  const field = document.getElementById(fieldId);
-  const ac = document.getElementById('acList');
-  if (!field||!ac) return;
-  let activeField = null;
-
-  field.addEventListener('focus', () => { activeField = fieldId; });
-  field.addEventListener('input', () => {
-    clearTimeout(acT[fieldId]);
-    if (field.value.length<2) { ac.classList.remove('on'); return; }
-    acT[fieldId] = setTimeout(async()=>{
-      const res = await geocode(field.value);
-      if (!res.length) { ac.classList.remove('on'); return; }
-      ac.innerHTML = res.map((r,i)=>{
-        const parts = r.display_name.split(',');
-        return `<div class="ac-i" data-i="${i}">
-          <span class="ac-ico">${isEnd?'📍':'🚶'}</span>
-          <div><div class="ac-n">${parts[0]}</div><div class="ac-s">${parts.slice(1,3).join(' ')}</div></div>
-        </div>`;
+function wireAC(fid,isEnd){
+  const field=document.getElementById(fid);
+  const ac=document.getElementById('acList');
+  if(!field||!ac)return;
+  field.addEventListener('input',()=>{
+    clearTimeout(acT[fid]);
+    if(field.value.length<2){ac.classList.remove('on');return;}
+    acT[fid]=setTimeout(async()=>{
+      const res=await geocode(field.value);
+      if(!res.length){ac.classList.remove('on');return;}
+      ac.innerHTML=res.map((r,i)=>{
+        const parts=r.display_name.split(',');
+        return `<div class="aci" data-i="${i}"><span class="acico">${isEnd?'📍':'🚶'}</span><div><div class="acn">${parts[0]}</div><div class="acs">${parts.slice(1,3).join(' ')}</div></div></div>`;
       }).join('');
       ac.classList.add('on');
-      ac.querySelectorAll('.ac-i').forEach((el,i)=>{
+      ac.querySelectorAll('.aci').forEach((el,i)=>{
         el.addEventListener('click',()=>{
-          const r=res[i];
-          const ll=[parseFloat(r.lon),parseFloat(r.lat)];
+          const r=res[i];const ll=[parseFloat(r.lon),parseFloat(r.lat)];
           const name=r.display_name.split(',')[0];
-          if(isEnd){endLL=ll;setVal('endInp',name);}
-          else{startLL=ll;setVal('startInp',name);}
-          drawRoutes();
-          map.flyTo({center:ll,zoom:15});
-          ac.classList.remove('on');
+          if(isEnd){endLL=ll;setVal('endInp',name);}else{startLL=ll;setVal('startInp',name);}
+          drawRoutes();map.flyTo({center:ll,zoom:15});ac.classList.remove('on');
         });
       });
     },380);
@@ -1138,30 +743,27 @@ function wireAC(fieldId, isEnd) {
   field.addEventListener('blur',()=>setTimeout(()=>ac.classList.remove('on'),200));
 }
 
-function swapLocations() {
-  const tmp = startLL; startLL=endLL; endLL=tmp;
+function swapLoc(){
+  const tmp=startLL;startLL=endLL;endLL=tmp;
   const sv=document.getElementById('startInp')?.value||'';
   const ev=document.getElementById('endInp')?.value||'';
-  setVal('startInp',ev); setVal('endInp',sv);
+  setVal('startInp',ev);setVal('endInp',sv);
   drawRoutes();
 }
 
-// ══════════════════════════════════════════
-// RESULTS TAB
-// ══════════════════════════════════════════
-function renderResultsWrapper() {
-  if (!routes.length) {
-    document.getElementById('shBody').innerHTML=`<div class="empty"><div class="ei">🗺️</div><div class="et">まだルートがありません</div><div class="es">「検索」タブから出発地と目的地を設定してください</div></div>`;
+// ── RESULTS TAB ────────────────────────────
+function renderResultsWrapper(){
+  if(!routes.length){
+    document.getElementById('shBody').innerHTML='<div class="empty"><div class="ei">🗺️</div><div class="et">まだルートがありません</div><div class="es">「検索」タブから出発地と目的地を設定してください</div></div>';
     return;
   }
   renderResultsTab();
 }
-
-function renderResultsTab() {
-  if (!routes.length) return;
+function renderResultsTab(){
+  if(!routes.length)return;
   const tVal=document.getElementById('departTime')?.value||nowTime;
   const dVal=document.getElementById('departDate')?.value||todayStr;
-  const [hh,mm]=tVal.split(':').map(Number);
+  const[hh,mm]=tVal.split(':').map(Number);
   const depMin=hh*60+mm;
   const sun=getSun(currentHour,currentMonth);
   const dIdx=Math.round(sun.azi/22.5)%16;
@@ -1169,29 +771,20 @@ function renderResultsTab() {
   const fmt=m=>{const h=Math.floor(m/60)%24,mn=m%60;return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`;};
 
   const renderSteps=r=>{
-    if(!r.legs?.[0]?.steps) return '';
+    if(!r.legs?.[0]?.steps)return'';
     return r.legs[0].steps.slice(0,10).map(s=>{
       const m=s.maneuver||{};
-      const ic=getNavIcon(m.type,m.modifier);
       const d=s.distance>1000?`${(s.distance/1000).toFixed(1)}km`:`${Math.round(s.distance)}m`;
-      const dir=getNavText(m.type,m.modifier);
-      return `<div class="step">
-        <div class="step-ic">${ic}</div>
-        <div class="step-tx">
-          <div class="step-name">${s.name||'道路'}</div>
-          <div class="step-dir">${dir}</div>
-        </div>
-        <div class="step-d">${d}</div>
-      </div>`;
+      return `<div class="step"><div class="stic">${navIcon(m.type,m.modifier)}</div><div class="sttx"><div class="stname">${s.name||'道路'}</div><div class="stdir">${navText(m.type,m.modifier)}</div></div><div class="std">${d}</div></div>`;
     }).join('');
   };
 
   document.getElementById('shBody').innerHTML=`
-    <div class="sun-c">
-      <div class="sun-ic">${sun.alt>0?'☀️':'🌙'}</div>
-      <div class="sun-rows">
-        <div class="sun-r"><span class="sun-l">出発日時</span><span class="sun-v">${dVal} ${tVal}</span></div>
-        <div class="sun-r"><span class="sun-l">太陽位置</span><span class="sun-v">${sunStr}</span></div>
+    <div class="sunc">
+      <div class="sunic">${sun.alt>0?'☀️':'🌙'}</div>
+      <div class="sunrows">
+        <div class="sunr"><span class="sunl">出発日時</span><span class="sunv">${dVal} ${tVal}</span></div>
+        <div class="sunr"><span class="sunl">太陽位置</span><span class="sunv">${sunStr}</span></div>
       </div>
     </div>
     <div class="sec">ルート比較</div>
@@ -1200,22 +793,21 @@ function renderResultsTab() {
       const mins=Math.round(r.route.duration/60);
       const arr=fmt(depMin+mins);
       const diff=i===1?`+${Math.round((r.route.distance-routes[0].route.distance)/10)*10}m`:'最短距離';
-      return `
-      <div class="rcard ${r.type}${i===activeR?' sel':''}" id="rc${i}" onclick="selectRoute(${i})">
-        <div class="rc-h">
-          <div class="rc-t ${r.type}">${r.type==='shortest'?'🟢 最短ルート':'🔵 日陰優先ルート'}</div>
-          <span class="rc-badge ${r.type==='shortest'?'b-s':'b-sh'}">${r.type==='shortest'?diff:`日陰 ${Math.round(r.score*100)}%`}</span>
+      return `<div class="rcard ${r.type}${i===activeR?' sel':''}" id="rc${i}" onclick="selectRoute(${i})">
+        <div class="rch">
+          <div class="rct ${r.type}">${r.type==='shortest'?'🟢 最短ルート':'🔵 日陰優先ルート'}</div>
+          <span class="rbadge ${r.type==='shortest'?'bs':'bsh'}">${r.type==='shortest'?diff:`日陰 ${Math.round(r.score*100)}%`}</span>
         </div>
-        <div class="rc-stats">
-          <div class="rc-stat"><div class="rc-v">${dist}<span class="rc-u">km</span></div><div class="rc-l">距離</div></div>
-          <div class="rc-stat"><div class="rc-v">${mins}<span class="rc-u">分</span></div><div class="rc-l">所要時間</div></div>
-          <div class="rc-stat"><div class="rc-v" style="font-size:17px;color:var(--acc2)">${arr}</div><div class="rc-l">到着予定</div></div>
+        <div class="rcstats">
+          <div class="rcst"><div class="rcv">${dist}<span class="rcu">km</span></div><div class="rcl">距離</div></div>
+          <div class="rcst"><div class="rcv">${mins}<span class="rcu">分</span></div><div class="rcl">所要時間</div></div>
+          <div class="rcst"><div class="rcv" style="font-size:17px;color:var(--acc2)">${arr}</div><div class="rcl">到着予定</div></div>
         </div>
-        <div class="sbar"><div class="sbar-f" style="width:${Math.round(r.score*100)}%"></div></div>
+        <div class="sbar"><div class="sbf" style="width:${Math.round(r.score*100)}%"></div></div>
         <div class="slbl">日陰率 ${Math.round(r.score*100)}%</div>
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button onclick="event.stopPropagation();startNav(${i})" style="flex:1;padding:9px;background:rgba(56,189,248,0.12);border:1px solid var(--acc2);border-radius:10px;color:var(--acc2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fn)">🧭 ナビ開始</button>
-          <button onclick="event.stopPropagation();fitRoutes()" style="flex:1;padding:9px;background:var(--s3);border:1px solid var(--b2);border-radius:10px;color:var(--txt);font-size:13px;cursor:pointer;font-family:var(--fn)">🗺️ 全体表示</button>
+        <div class="rbtns">
+          <button class="rbtn rbtn-nav" onclick="event.stopPropagation();startNav(${i})">🧭 ナビ開始</button>
+          <button class="rbtn rbtn-map" onclick="event.stopPropagation();fitRoutes()">🗺️ 全体表示</button>
         </div>
         <div class="steps">${renderSteps(r.route)}</div>
       </div>`;
@@ -1223,107 +815,71 @@ function renderResultsTab() {
   `;
 }
 
-// ══════════════════════════════════════════
-// SUN TAB
-// ══════════════════════════════════════════
+// ── SUN TAB ────────────────────────────────
 function sunRise(mo){
   const doys=[0,15,46,75,105,135,162,198,228,258,288,318,344];
   const doy=doys[mo]||162;
   const decl=23.45*Math.sin((360/365*(doy-81))*Math.PI/180)*Math.PI/180;
   const cos=-Math.tan(LAT_R)*Math.tan(decl);
-  if(cos>1)return 12; if(cos<-1)return 0;
+  if(cos>1)return 12;if(cos<-1)return 0;
   return 12-Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI/15;
 }
 function sunSet(mo){return 24-sunRise(mo);}
 function fmtH(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;}
 
-function renderSunTab() {
+function renderSunTab(){
   const sun=getSun(currentHour,currentMonth);
   const dIdx=Math.round(sun.azi/22.5)%16;
   const sLen=sun.alt>2?Math.min(999,Math.round(10/Math.tan(sun.altR)))+'m':'—';
   document.getElementById('shBody').innerHTML=`
     <div class="sec">現在の太陽</div>
-    <div class="stat-grid">
-      ${[['太陽高度',sun.alt>0?sun.alt.toFixed(1)+'°':'日没'],['方位',sun.azi.toFixed(0)+'° '+DIRS[dIdx]],['影の方向',DIRS[(dIdx+8)%16]+'方向'],['10m建物の影',sLen]].map(([l,v])=>`<div class="stat-b"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`).join('')}
+    <div class="sgrid">
+      ${[['太陽高度',sun.alt>0?sun.alt.toFixed(1)+'°':'日没'],['方位',sun.azi.toFixed(0)+'° '+DIRS[dIdx]],['影の方向',DIRS[(dIdx+8)%16]+'方向'],['10m建物の影',sLen]].map(([l,v])=>`<div class="sb"><div class="sbv">${v}</div><div class="sbl">${l}</div></div>`).join('')}
     </div>
     <div class="sec">季節別 日照時間</div>
     ${[{n:'☀️ 夏至 (6月21日)',mo:6},{n:'🌸 春分/秋分',mo:3},{n:'❄️ 冬至 (12月22日)',mo:12}].map(s=>{
       const rise=sunRise(s.mo),set=sunSet(s.mo),h=set-rise;
       const noon=getSun(12,s.mo);
-      return `<div class="sea-b">
-        <div class="sea-h"><span class="sea-n">${s.n}</span><span class="sea-v">正午${noon.alt.toFixed(0)}°</span></div>
-        <div class="sea-tr">
-          <span class="sea-tm">${fmtH(rise)}</span>
-          <div class="sea-bar"><div class="sea-fill" style="width:${h/15*100}%"></div></div>
-          <span class="sea-tm" style="text-align:right">${fmtH(set)}</span>
-        </div>
-        <div class="sea-info">日照時間 ${h.toFixed(1)}時間</div>
+      return `<div class="seab">
+        <div class="seah"><span class="sean">${s.n}</span><span class="seav">正午${noon.alt.toFixed(0)}°</span></div>
+        <div class="seatr"><span class="seatm">${fmtH(rise)}</span><div class="seabar"><div class="seafill" style="width:${h/15*100}%"></div></div><span class="seatm" style="text-align:right">${fmtH(set)}</span></div>
+        <div class="seainfo">日照時間 ${h.toFixed(1)}時間</div>
       </div>`;
     }).join('')}
-    <div class="note">💡 東京（北緯35.7°）の天文計算値。夏は太陽が高く影が短い。冬は低く建物の影が長くなります。地図の影はOSMの実際の建物データから計算しています。</div>
+    <div class="note">💡 東京（北緯35.7°）の天文計算値。夏は太陽が高く影が短い。冬は低くなりビルの影が長くなります。</div>
   `;
 }
 
-// ══════════════════════════════════════════
-// TIME
-// ══════════════════════════════════════════
-function onTime(v) {
+// ── TIME ───────────────────────────────────
+function onTime(v){
   currentHour=parseFloat(v);
   const hh=Math.floor(currentHour),mm=Math.round((currentHour-hh)*60);
   const el=document.getElementById('departTime');
-  if(el) el.value=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  if(el)el.value=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
   updateSun();
 }
-function togglePlay() {
+function togglePlay(){
   playing=!playing;
   document.getElementById('playBtn').textContent=playing?'⏸':'▶';
-  if(playing){
-    playInv=setInterval(()=>{
-      currentHour=(currentHour+0.07);
-      if(currentHour>20)currentHour=5;
-      document.getElementById('tRange').value=currentHour;
-      updateSun();
-    },80);
-  } else clearInterval(playInv);
+  if(playing)playInv=setInterval(()=>{currentHour=(currentHour+0.07);if(currentHour>20)currentHour=5;document.getElementById('tRange').value=currentHour;updateSun();},80);
+  else clearInterval(playInv);
 }
 
-// ══════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════
+// ── UTILS ──────────────────────────────────
 function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+function setTxt(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 let toastT=null;
 function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('on');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2800);
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2800);
 }
-function dismissInstall(){
-  document.getElementById('installBanner').classList.remove('on');
-  localStorage.setItem('km3-inst','1');
-}
+function dismissInstall(){document.getElementById('installBanner').classList.remove('on');localStorage.setItem('km4-inst','1');}
 
-// ══════════════════════════════════════════
-// MAP MOVE → refresh buildings
-// ══════════════════════════════════════════
-// ══════════════════════════════════════════
-// SERVICE WORKER
-// ══════════════════════════════════════════
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-}
+// ── SW ─────────────────────────────────────
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
-// ══════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════
+// ── BOOT ───────────────────────────────────
 initMap();
-
-// Fetch buildings on map stop
-setTimeout(()=>{
-  if(map){
-    map.on('moveend', scheduleBuildingFetch);
-    map.on('zoomend', scheduleBuildingFetch);
-  }
-},2000);
 </script>
 </body>
 </html>

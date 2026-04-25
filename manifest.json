@@ -7,12 +7,5 @@
   "background_color": "#07111f",
   "theme_color": "#07111f",
   "orientation": "portrait",
-  "icons": [
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%2307111f'/><circle cx='256' cy='140' r='70' fill='%23f59e0b'/><polygon points='256,210 150,420 362,420' fill='%231e3456'/><ellipse cx='256' cy='415' rx='90' ry='20' fill='rgba(56,189,248,0.4)'/></svg>",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "icons": [{"src":"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%2307111f'/><circle cx='256' cy='140' r='72' fill='%23f59e0b'/><polygon points='256,212 148,424 364,424' fill='%231e3456'/><ellipse cx='256' cy='418' rx='92' ry='20' fill='rgba(56,189,248,0.4)'/></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]
 }
