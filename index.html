@@ -78,15 +78,15 @@ input.sl::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;bo
 .tbsun{font-size:10px;color:var(--mut);font-family:var(--mo);margin-top:5px;text-align:center}
 
 /* SHEET */
-#sheet{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--s1);border-radius:22px 22px 0 0;border-top:1px solid var(--b2);box-shadow:0 -12px 48px rgba(0,0,0,.7);display:flex;flex-direction:column;max-height:91vh;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
+#sheet{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--s1);border-radius:22px 22px 0 0;border-top:1px solid var(--b2);box-shadow:0 -12px 48px rgba(0,0,0,.7);display:flex;flex-direction:column;height:92vh;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
 #sheet.peek{transform:translateY(calc(100% - var(--peek) - var(--sb)))}
-#sheet.half{transform:translateY(32%)}
+#sheet.half{transform:translateY(35%)}
 #sheet.full{transform:translateY(0)}
-.sh-hdl{width:40px;height:5px;background:var(--b2);border-radius:3px;margin:10px auto 0;cursor:grab;flex-shrink:0}
+.sh-hdl{width:40px;height:5px;background:var(--b2);border-radius:3px;margin:10px auto 0;cursor:grab;flex-shrink:0;touch-action:none}
 .sh-tabs{display:flex;border-bottom:1px solid var(--b1);padding:0 16px;flex-shrink:0;margin-top:6px}
 .sh-tab{flex:1;padding:10px 2px;font-size:12px;font-weight:700;color:var(--mut);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .18s}
 .sh-tab.on{color:var(--acc2);border-bottom-color:var(--acc2)}
-.sh-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(var(--sb) + 16px)}
+.sh-body{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:14px 16px calc(var(--sb) + 24px);overscroll-behavior:contain;min-height:0}
 .sh-body::-webkit-scrollbar{display:none}
 
 /* SEARCH */
@@ -325,18 +325,60 @@ function initMap(){
     style:{
       version:8,
       glyphs:'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+      sprite:'https://tiles.openfreemap.org/sprites/liberty',
       sources:{
-        'carto':{
-          type:'raster',
-          tiles:['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png','https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
-          tileSize:256,
-          attribution:'© OpenStreetMap © CARTO',
-          maxzoom:19
+        'openmaptiles':{
+          type:'vector',
+          url:'https://tiles.openfreemap.org/planet'
         }
       },
       layers:[
-        {id:'bg',type:'background',paint:{'background-color':'#07111f'}},
-        {id:'tiles',type:'raster',source:'carto',paint:{'raster-opacity':1}}
+        // ── 地面・背景 ──
+        {id:'background',type:'background',paint:{'background-color':'#0e1f12'}},
+
+        // ── 水域 ──
+        {id:'water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0a2a4a'}},
+        {id:'water-shadow',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0d3358','fill-opacity':0.5}},
+
+        // ── 公園・緑地 ──
+        {id:'landuse-park',type:'fill',source:'openmaptiles','source-layer':'landuse',filter:['in','class','park','forest','grass','wood','cemetery','nature_reserve'],paint:{'fill-color':'#0f2a14','fill-opacity':0.9}},
+        {id:'landuse-residential',type:'fill',source:'openmaptiles','source-layer':'landuse',filter:['in','class','residential','suburb'],paint:{'fill-color':'#101e0e','fill-opacity':0.6}},
+        {id:'landuse-commercial',type:'fill',source:'openmaptiles','source-layer':'landuse',filter:['in','class','commercial','retail','industrial'],paint:{'fill-color':'#161a10','fill-opacity':0.6}},
+
+        // ── 地面（砂地・広場など） ──
+        {id:'landcover',type:'fill',source:'openmaptiles','source-layer':'landcover',paint:{'fill-color':'#0d1a0d','fill-opacity':0.7}},
+
+        // ── 建物の影（底面） ──
+        {id:'building-shadow',type:'fill',source:'openmaptiles','source-layer':'building',paint:{'fill-color':'#050e08','fill-opacity':0.8}},
+
+        // ── 建物 ──
+        {id:'building',type:'fill',source:'openmaptiles','source-layer':'building',paint:{
+          'fill-color':['interpolate',['linear'],['coalesce',['get','render_height'],['get','height'],5],
+            0,'#1a2e1a', 10,'#1e3520', 30,'#243d28', 60,'#1a3020'
+          ],
+          'fill-outline-color':'#2a4a2a',
+          'fill-opacity':0.95
+        }},
+
+        // ── 道路（下地・ケーシング） ──
+        {id:'road-motorway-case',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','motorway','trunk'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1a3a1a','line-width':['interpolate',['linear'],['zoom'],8,2,14,10,18,24]}},
+        {id:'road-primary-case',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','primary','secondary'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#152a15','line-width':['interpolate',['linear'],['zoom'],10,2,14,8,18,18]}},
+        {id:'road-minor-case',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','tertiary','minor','service','track'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#0f1f0f','line-width':['interpolate',['linear'],['zoom'],12,1,14,5,18,12]}},
+
+        // ── 道路（本線） ──
+        {id:'road-motorway',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','motorway','trunk'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#3a6b3a','line-width':['interpolate',['linear'],['zoom'],8,1.5,14,7,18,18]}},
+        {id:'road-primary',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','primary','secondary'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#2d5a2d','line-width':['interpolate',['linear'],['zoom'],10,1,14,5,18,14]}},
+        {id:'road-minor',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','tertiary','minor','service'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1f3d1f','line-width':['interpolate',['linear'],['zoom'],12,0.5,14,3,18,8]}},
+        {id:'road-path',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','path','footway','cycleway'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1a3a1a','line-width':1.5,'line-dasharray':[2,2]}},
+
+        // ── 鉄道 ──
+        {id:'railway',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in','class','rail','transit'],layout:{'line-join':'round'},paint:{'line-color':'#254525','line-width':2,'line-dasharray':[3,2]}},
+
+        // ── 地名ラベル ──
+        {id:'label-water',type:'symbol',source:'openmaptiles','source-layer':'water_name',layout:{'text-field':['get','name:ja'],'text-size':11,'text-font':['Open Sans Regular']},paint:{'text-color':'#38bdf8','text-halo-color':'#0a1628','text-halo-width':1.5}},
+        {id:'label-road',type:'symbol',source:'openmaptiles','source-layer':'transportation_name',minzoom:14,layout:{'text-field':['coalesce',['get','name:ja'],['get','name']],'text-size':10,'text-font':['Open Sans Regular'],'symbol-placement':'line','text-max-angle':30},paint:{'text-color':'#5a8a5a','text-halo-color':'#0e1f12','text-halo-width':1.5}},
+        {id:'label-place-city',type:'symbol',source:'openmaptiles','source-layer':'place',filter:['in','class','city','town'],layout:{'text-field':['coalesce',['get','name:ja'],['get','name']],'text-size':['interpolate',['linear'],['zoom'],8,11,14,15],'text-font':['Open Sans Bold']},paint:{'text-color':'#aac8aa','text-halo-color':'#0e1f12','text-halo-width':2}},
+        {id:'label-place-suburb',type:'symbol',source:'openmaptiles','source-layer':'place',filter:['in','class','suburb','neighbourhood','village'],minzoom:12,layout:{'text-field':['coalesce',['get','name:ja'],['get','name']],'text-size':11,'text-font':['Open Sans Regular']},paint:{'text-color':'#7aaa7a','text-halo-color':'#0e1f12','text-halo-width':1.5}},
       ]
     },
     center:TOKYO,zoom:14,pitch:0,bearing:0,antialias:true,maxZoom:19
@@ -366,12 +408,13 @@ function initMap(){
     },paint:{'text-color':'#dde9f8','text-halo-color':'#07111f','text-halo-width':1.5}});
 
     // 3D buildings (vector tiles - fast, no API needed)
-    map.addSource('openmaptiles',{type:'vector',url:'https://tiles.openfreemap.org/planet'});
     map.addLayer({
       id:'3d-buildings',type:'fill-extrusion',source:'openmaptiles','source-layer':'building',minzoom:14,
       paint:{
-        'fill-extrusion-color':['interpolate',['linear'],['coalesce',['get','render_height'],['get','height'],8],0,'#0c1e38',20,'#162840',60,'#1e3456',120,'#0f2040'],
-        'fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],8],
+        'fill-extrusion-color':['interpolate',['linear'],['coalesce',['get','render_height'],['get','height'],5],
+          0,'#1e3820', 15,'#254a28', 40,'#2a5530', 80,'#1e4025'
+        ],
+        'fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],5],
         'fill-extrusion-base':['coalesce',['get','render_min_height'],0],
         'fill-extrusion-opacity':0
       }
@@ -659,25 +702,39 @@ function stopNav(){document.getElementById('navBar').classList.remove('on');navS
 
 // ── SHEET ──────────────────────────────────
 function setSheet(s){shPos=s;document.getElementById('sheet').className=s;}
-function openSheet(t){setSheet('half');setTab(t);}
+function openSheet(t){setSheet('full');setTab(t);}
 (function(){
   const h=document.getElementById('handle');
-  let sy=0,ss='peek';
-  const s=e=>{sy=(e.touches?e.touches[0].clientY:e.clientY);ss=shPos;};
+  let sy=0,ss='peek',dragging=false;
+  const s=e=>{
+    sy=(e.touches?e.touches[0].clientY:e.clientY);
+    ss=shPos;dragging=true;
+    e.preventDefault();
+  };
+  const mv=e=>{
+    if(!dragging)return;
+    e.preventDefault();
+  };
   const en=e=>{
+    if(!dragging)return;
+    dragging=false;
     const ey=(e.changedTouches?e.changedTouches[0].clientY:e.clientY);
     const dy=ey-sy;
-    if(dy<-60)setSheet(ss==='peek'?'half':ss==='half'?'full':'full');
-    else if(dy>60)setSheet(ss==='full'?'half':ss==='half'?'peek':'peek');
+    if(dy<-50)setSheet(ss==='peek'?'half':ss==='half'?'full':'full');
+    else if(dy>50)setSheet(ss==='full'?'half':ss==='half'?'peek':'peek');
   };
-  h.addEventListener('touchstart',s,{passive:true});h.addEventListener('touchend',en);
-  h.addEventListener('mousedown',s);h.addEventListener('mouseup',en);
+  h.addEventListener('touchstart',s,{passive:false});
+  h.addEventListener('touchmove',mv,{passive:false});
+  h.addEventListener('touchend',en);
+  h.addEventListener('mousedown',s);
+  h.addEventListener('mouseup',en);
 })();
 
 // ── TABS ───────────────────────────────────
 function setTab(t){
   tab=t;
   ['search','results','sun'].forEach(x=>document.getElementById(`tab-${x}`).classList.toggle('on',x===t));
+  if(shPos==='peek')setSheet('half');
   renderTab();
 }
 function renderTab(){
