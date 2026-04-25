@@ -1,18 +1,18 @@
 {
   "name": "影道 KageMichi",
   "short_name": "影道",
-  "description": "日陰ルートナビ — 夏の散歩を快適に",
+  "description": "日陰ルートナビ",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0a1628",
-  "theme_color": "#0a1628",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230a1628'/><circle cx='96' cy='60' r='28' fill='%23f59e0b'/><polygon points='96,88 60,160 132,160' fill='%231e3a5f'/><ellipse cx='96' cy='158' rx='36' ry='8' fill='rgba(56,189,248,0.4)'/></svg>",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%2307111f'/><circle cx='256' cy='140' r='70' fill='%23f59e0b'/><polygon points='256,210 150,420 362,420' fill='%231e3456'/><ellipse cx='256' cy='415' rx='90' ry='20' fill='rgba(56,189,248,0.4)'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
-  ],
-  "categories": ["navigation", "travel", "utilities"]
+  ]
 }
